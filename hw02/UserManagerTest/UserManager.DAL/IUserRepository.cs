@@ -1,12 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Threading;
 using System.Threading.Tasks;
+using UserManager.Common;
 
 namespace UserManager.DAL
 {
-    interface IUserRepository
+    public interface IUserRepository
     {
+        Task<string> CreateUserAsync(User user, CancellationToken ct);
+        Task<User> GetUserAsync(string userId, CancellationToken ct);
+        Task UpdateUserAsync(string userId, User user, CancellationToken ct);
+        Task DeleteUserAsync(string userId, CancellationToken ct);
     }
 }

@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Threading.Tasks;
 using UserManager.Common;
+using UserManager.DAL;
 
 namespace UserManager.API.Controllers
 {
@@ -12,38 +12,36 @@ namespace UserManager.API.Controllers
     public class UserController : ControllerBase
     {
         private readonly ILogger<UserController> _logger;
+        private readonly IUserRepository _repository;
 
-        public UserController(ILogger<UserController> logger)
+        public UserController(ILogger<UserController> logger, IUserRepository repository)
         {
             _logger = logger;
+            _repository = repository;
         }
 
-        [HttpPost]
-        [Route("")]
+        [HttpPost("")]
         public async Task<string> CreateUser([FromBody] User user)
         {
-            return Guid.NewGuid().ToString();
+            return await _repository.CreateUserAsync(user, HttpContext.RequestAborted);
         }
 
-        [HttpGet]
-        [Route("{userId}")]
+        [HttpGet("{userId}")]
         public async Task<User> GetUser(string userId)
         {
-            return new User();
+            return await _repository.GetUserAsync(userId, HttpContext.RequestAborted);
         }
 
-        [HttpPut]
-        [Route("{userId}")]
+        [HttpPut("{userId}")]
         public async Task UpdateUser(string userId, [FromBody] User user)
         {
-            //
+            await _repository.UpdateUserAsync(userId, user, HttpContext.RequestAborted);
         }
 
-        [HttpDelete]
-        [Route("{userId}")]
+        [HttpDelete("{userId}")]
         public async Task DeleteUser(string userId)
         {
-            //
+            await _repository.DeleteUserAsync(userId, HttpContext.RequestAborted);
         }
     }
 }

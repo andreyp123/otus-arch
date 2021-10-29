@@ -4,28 +4,11 @@ namespace UserManager.DAL.Model
 {
     public class UserDbContext : DbContext
     {
-        private readonly string _connectionString;
-
         public DbSet<UserEntity> Users { get; set; }
-
-        public UserDbContext()
+        
+        public UserDbContext(DbContextOptions<UserDbContext> options)
+            : base(options)
         {
-            _connectionString = "Data Source=./news.db";
-        }
-
-        public UserDbContext(string connectionString)
-        {
-            _connectionString = connectionString;
-        }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            base.OnConfiguring(optionsBuilder);
-
-           // optionsBuilder.UseSqlite(_connectionString);
-           // todo:
-           // - postgres
-           // - design time builder, parameter for cli
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -33,7 +16,10 @@ namespace UserManager.DAL.Model
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<UserEntity>()
-                .HasIndex(nie => nie.UserId);
+                .HasKey(ue => ue.Id);
+
+            modelBuilder.Entity<UserEntity>()
+                .HasIndex(ue => ue.UserId);
         }
     }
 }
