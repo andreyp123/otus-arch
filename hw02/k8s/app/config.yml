@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-manager-test-config
+  namespace: otus-arch-hw02
+data:
+  LOG_LEVEL: Information
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: user-manager-test-secret
+  namespace: otus-arch-hw02
+type: Opaque
+data:
+  # server=user-manager-test-postgresql;port=5432;database=UserDb;username=sa;password=sa;
+  DB_CONNECTION_STRING: c2VydmVyPXVzZXItbWFuYWdlci10ZXN0LXBvc3RncmVzcWw7cG9ydD01NDMyO2RhdGFiYXNlPVVzZXJEYjt1c2VybmFtZT1zYTtwYXNzd29yZD1zYTsK

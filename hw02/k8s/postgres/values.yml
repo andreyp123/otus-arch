@@ -1,0 +1,3 @@
+postgresqlDatabase: UserDb
+postgresqlUsername: sa
+postgresqlPassword: sa
