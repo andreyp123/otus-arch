@@ -150,7 +150,17 @@
 			"request": {
 				"method": "GET",
 				"header": [],
-				"url": null
+				"url": {
+					"raw": "http://arch.homework/version",
+					"protocol": "http",
+					"host": [
+						"arch",
+						"homework"
+					],
+					"path": [
+						"version"
+					]
+				}
 			},
 			"response": []
 		},

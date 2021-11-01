@@ -85,10 +85,12 @@ spec:
               port: 8000
               path: /health
             initialDelaySeconds: 5
+            timeoutSeconds: 5
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /
               port: 8000
             initialDelaySeconds: 5
+            timeoutSeconds: 5
             periodSeconds: 20
