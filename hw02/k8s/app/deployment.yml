@@ -63,9 +63,16 @@ spec:
       labels:
         app: user-manager-test
     spec:
+#      initContainers:
+#        - image: groundnuty/k8s-wait-for:v1.3
+#          name: user-manager-test-init
+#          imagePullPolicy: IfNotPresent
+#          args: 
+#            - "job"
+#            - "user-manager-test-migration-job"
       containers:            
         - image: andreyp123/user-manager-test:0.5
-          name: user-manager-test 
+          name: user-manager-test
           env:
             - name: Logging__LogLevel__Default
               valueFrom:
