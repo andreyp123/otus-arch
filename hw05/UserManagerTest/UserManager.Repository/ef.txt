@@ -1,0 +1,11 @@
+# prepare
+dotnet tool install --global dotnet-ef
+dotnet add package Microsoft.EntityFrameworkCore.Design
+
+# create migrations
+dotnet ef migrations add InitialCreate
+dotnet ef migrations add MigrationName -- connectionString="connectionString"
+
+# update db
+dotnet ef database update
+dotnet ef database update -- connectionString="connectionString"
