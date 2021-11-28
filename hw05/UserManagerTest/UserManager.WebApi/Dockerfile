@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:5.0-alpine AS publish
+FROM mcr.microsoft.com/dotnet/sdk:6.0-alpine AS publish
 ARG VERSION=0.0.1
 
 WORKDIR /src
@@ -25,7 +25,7 @@ RUN dotnet publish "UserManager.Repository.Migration.csproj" -c Release -o /app/
     /p:PublishTrimmed=true \
     /p:Version="${VERSION}"
 
-FROM mcr.microsoft.com/dotnet/runtime-deps:5.0-alpine AS final
+FROM mcr.microsoft.com/dotnet/runtime-deps:6.0-alpine AS final
 WORKDIR /migration
 COPY --from=publish /app/migration .
 

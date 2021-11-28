@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace UserManager.WebApi.Dto
+namespace UserManager.Common.Model.API
 {
     public class ListResult<ItemT>
     {

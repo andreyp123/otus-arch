@@ -1,18 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.11.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.14.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\UserManager.BusinessLogic\UserManager.BusinessLogic.csproj" />
     <ProjectReference Include="..\UserManager.Common\UserManager.Common.csproj" />
     <ProjectReference Include="..\UserManager.Repository\UserManager.Repository.csproj" />
+    <ProjectReference Include="..\UserManager.TokenManager\UserManager.TokenManager.csproj" />
   </ItemGroup>
 
 </Project>

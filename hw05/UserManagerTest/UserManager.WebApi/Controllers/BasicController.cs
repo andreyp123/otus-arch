@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Reflection;
+using Microsoft.AspNetCore.Authorization;
 
 namespace UserManager.WebApi.Controllers
 {
@@ -22,15 +23,15 @@ namespace UserManager.WebApi.Controllers
             };
         }
 
-        [HttpGet]
-        [Route("")]
+        [HttpGet("")]
+        [AllowAnonymous]
         public string Hello()
         {
             return $"Hello from UserManagerTest!";
         }
 
-        [HttpGet]
-        [Route("version")]
+        [HttpGet("version")]
+        [AllowAnonymous]
         public VersionInfo GetVersion()
         {
             return _versionInfo;

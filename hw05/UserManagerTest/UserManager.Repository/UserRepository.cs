@@ -1,12 +1,11 @@
-﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using UserManager.Common;
+using UserManager.Common.Model;
 using UserManager.Repository.Model;
 
 namespace UserManager.Repository
@@ -15,21 +14,25 @@ namespace UserManager.Repository
     {
         private readonly ILogger<UserRepository> _logger;
         private readonly UserDbContext _dbContext;
-        private readonly IMapper _mapper;
 
-        public UserRepository(ILogger<UserRepository> logger, UserDbContext dbContext, IMapper mapper)
+        public UserRepository(ILogger<UserRepository> logger, UserDbContext dbContext)
         {
             _logger = logger;
             _dbContext = dbContext;
-            _mapper = mapper;
         }
 
         public async Task<string> CreateUserAsync(User user, CancellationToken ct = default)
         {
             Guard.NotNull(user, nameof(user));
+            Guard.NotNullOrEmpty(user.UserId, nameof(user.UserId));
+            Guard.NotNullOrEmpty(user.Username, nameof(user.Username));
 
-            user.UserId = Guid.NewGuid().ToString();
-            await _dbContext.Users.AddAsync(_mapper.Map<UserEntity>(user), ct);
+            if (await _dbContext.Users.AnyAsync(ue => ue.Username == user.Username))
+            {
+                throw new UserManagerException($"Username {user.Username} already exists");
+            }
+
+            await _dbContext.Users.AddAsync(MapUserEntity(user), ct);
             await _dbContext.SaveChangesAsync(ct);
             return user.UserId;
         }
@@ -41,7 +44,7 @@ namespace UserManager.Repository
             var users = await _dbContext.Users
                 .Skip(start)
                 .Take(size)
-                .Select(ue => _mapper.Map<User>(ue))
+                .Select(ue => MapUser(ue))
                 .ToArrayAsync(ct);
             return (users, total);
         }
@@ -53,10 +56,16 @@ namespace UserManager.Repository
             {
                 throw new UserManagerException($"User {userId} not found");
             }
-            return _mapper.Map<User>(userEntity);
+            return MapUser(userEntity);
         }
 
-        public async Task UpdateUserAsync(string userId, User user, CancellationToken ct = default)
+        public async Task<User> GetUserByNameAsync(string username, CancellationToken ct = default)
+        {
+            var userEntity = await _dbContext.Users.FirstOrDefaultAsync(ue => ue.Username == username, ct);
+            return MapUser(userEntity);
+        }
+
+        public async Task UpdateUserAsync(string userId, User user, bool updateRoles = false, CancellationToken ct = default)
         {
             Guard.NotNull(user, nameof(user));
 
@@ -65,8 +74,25 @@ namespace UserManager.Repository
             {
                 throw new UserManagerException($"User {userId} not found");
             }
-            userEntity.Username = user.Username;
-            userEntity.Email = user.Email;
+
+            if (userEntity.Username != user.Username &&
+                await _dbContext.Users.AnyAsync(ue => ue.Username == user.Username && ue.UserId != userId))
+            {
+                throw new UserManagerException($"Username {user.Username} already exists");
+            }
+
+            var newUserEntity = MapUserEntity(user);
+            userEntity.Username = newUserEntity.Username;
+            userEntity.Email = newUserEntity.Email;
+            if (updateRoles)
+            {
+                userEntity.Roles = newUserEntity.Roles;
+            }
+            if (newUserEntity.PasswordHash != null)
+            {
+                userEntity.PasswordHash = newUserEntity.PasswordHash;
+            }
+
             await _dbContext.SaveChangesAsync(ct);
         }
 
@@ -79,6 +105,34 @@ namespace UserManager.Repository
             }
             _dbContext.Users.Remove(userEntity);
             await _dbContext.SaveChangesAsync(ct);
+        }
+
+        private static UserEntity MapUserEntity(User u)
+        {
+            return new UserEntity
+            {
+                UserId = u.UserId,
+                Username = u.Username,
+                Email = u.Email,
+                PasswordHash = u.PasswordHash,
+                Roles = u.Roles != null
+                    ? string.Join(",", u.Roles)
+                    : string.Empty
+            };
+        }
+
+        private static User MapUser(UserEntity ue)
+        {
+            return new User
+            {
+                UserId = ue.UserId,
+                Username = ue.Username,
+                Email = ue.Email,
+                PasswordHash = ue.PasswordHash,
+                Roles = !string.IsNullOrWhiteSpace(ue.Roles)
+                    ? ue.Roles.Split(",", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                    : new string[0]
+            };
         }
     }
 }

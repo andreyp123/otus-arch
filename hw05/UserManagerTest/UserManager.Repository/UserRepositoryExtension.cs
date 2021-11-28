@@ -9,7 +9,6 @@ namespace UserManager.Repository
         public static IServiceCollection AddUserRepository(
             this IServiceCollection services)
         {
-            services.AddAutoMapper(typeof(AutoMapperProfile));
             services.AddSingleton<UserRepositoryConfig>();
             services.AddDbContext<UserDbContext>(
                 (provider, builder) =>

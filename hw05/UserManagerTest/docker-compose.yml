@@ -2,13 +2,13 @@ version: '3.8'
 
 services:
   user-manager-test:
-    image: andreyp123/user-manager-test:1.0
+    image: andreyp123/user-manager-test:1.1
     container_name: user-manager-test
     build:
       context: ./
       dockerfile: UserManager.WebApi/Dockerfile
       args:
-        VERSION: 1.0.0
+        VERSION: 1.1.0
     ports:
       - 8000:8000
     environment:
