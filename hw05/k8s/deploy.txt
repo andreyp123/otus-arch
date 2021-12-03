@@ -1,0 +1,17 @@
+# user-manager-test app deplyoment
+
+1. Create namespace
+kubectl create namespace otus-arch-hw05
+
+2. Install postgres
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install user-manager-test -n otus-arch-hw05 -f ./postgres/values.yml bitnami/postgresql
+
+3. Apply configmap and secrets
+kubectl apply -f ./app/config.yml
+
+4. Apply database migration
+kubectl apply -f ./app/migration-job.yml
+
+5. Deploy application
+kubectl apply -f ./app/deployment.yml

@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: user-manager-test-migration-job
+  namespace: otus-arch-hw05
+  labels:
+    app: user-manager-test-migration
+spec:
+  template:
+    metadata:
+      name: user-manager-test-migration
+      labels:
+        app: user-manager-test-migration
+    spec:
+      restartPolicy: Never
+      containers:
+        - image: andreyp123/user-manager-test:1.1
+          name: user-manager-test-migration
+          env:
+            - name: UserRepository__ConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: user-manager-test-secret
+                  key: DB_CONNECTION_STRING
+          command:
+            - /migration/UserManager.Repository.Migration
+  backoffLimit: 0
