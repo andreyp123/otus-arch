@@ -1,0 +1,100 @@
+openapi: 3.0.1
+info:
+  title: User Service
+  version: '1'
+paths:
+  /healthcheck:
+    get:
+      summary: checks health
+      responses:
+        '200':
+          description: healthy
+        '503':
+          description: unhealthy
+  /auth/token:
+    get:
+      summary: gets access token by username and password
+      responses:
+        '200':
+          description: success, returns access token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSecurityToken'
+        '401':
+          description: unauthorized
+  /auth/check:
+    get:
+      summary: checks the user authentication
+      responses:
+        '200':
+          description: success
+        '401':
+          description: unauthorized
+  /register:
+    post:
+      summary: creates a new user
+      requestBody:
+        description: user to create
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserDto'
+      responses:
+        '200':
+          description: returns newly created user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDto'
+        '400':
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDto'
+  /profile:
+    get:
+      summary: gets current user profile
+      responses:
+        '200':
+          description: returns user info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDto'
+        '400':
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDto'
+        '401':
+          description: unauthorized
+components:
+  schemas:
+    UserSecurityToken:
+      type: object
+      properties:
+        AccessToken:
+          type: string
+    UserDto:
+      type: object
+      properties:
+        UserId:
+          type: string
+        Username:
+          type: string
+        Email:
+          type: string
+    ErrorDto:
+      type: object
+      properties:
+        message:
+          type: string
+        id:
+          type: string
+  securitySchemes:
+    Bearer:
+      type: http
+      scheme: Bearer

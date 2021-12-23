@@ -1,0 +1,143 @@
+openapi: 3.0.1
+info:
+  title: Billing Service
+  version: '1'
+paths:
+  /healthcheck:
+    get:
+      summary: checks health
+      responses:
+        '200':
+          description: healthy
+        '503':
+          description: unhealthy
+  /account:
+    post:
+      summary: creates a new payment account for the user
+      requestBody:
+        description: account to create
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAccountDto'
+      responses:
+        '200':
+          description: success, returns newly created account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountDto'
+        '400':
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDto'
+        '401':
+          description: unauthorized
+    get:
+      summary: gets the current account informaton
+      responses:
+        '200':
+          description: returns account info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountDto'
+        '400':
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDto'
+        '401':
+          description: unauthorized
+  /account/deposit:
+    post:
+      summary: add money to the current account
+      parameters:
+        - name: amount
+          in: query
+          description: amount of money to deposit
+          schema:
+            type: number
+      responses:
+        '200':
+          description: success, returns account info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountDto'
+        '400':
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDto'
+        '401':
+          description: unauthorized
+  /account/withdraw:
+    post:
+      summary: withdraw money from the current account
+      parameters:
+        - name: amount
+          in: query
+          description: amount of money to withdraw
+          schema:
+            type: number
+      responses:
+        '200':
+          description: success, returns account info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountDto'
+        '409':
+          description: not enouth money, returns account info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountDto'
+        '400':
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDto'
+        '401':
+          description: unauthorized
+components:
+  schemas:
+    CreateAccountDto:
+      type: object
+      properties:
+        AccountId:
+          type: string
+        Currency:
+          type: string
+    AccountDto:
+      type: object
+      properties:
+        AccountId:
+          type: string
+        Balance:
+          type: number
+        Currency:
+          type: string
+        UserId:
+          type: string
+        Username:
+          type: string
+        CreatedDate:
+          type: string
+    ErrorDto:
+      type: object
+      properties:
+        message:
+          type: string
+        id:
+          type: string
+  securitySchemes:
+    Bearer:
+      type: http
+      scheme: Bearer

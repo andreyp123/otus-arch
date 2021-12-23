@@ -1,0 +1,97 @@
+openapi: 3.0.1
+info:
+  title: Order Service
+  version: '1'
+paths:
+  /healthcheck:
+    get:
+      summary: checks health
+      responses:
+        '200':
+          description: healthy
+        '503':
+          description: unhealthy
+  /orders:
+    post:
+      summary: creates a new order for the user
+      requestBody:
+        description: user to create
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderDto'
+      responses:
+        '200':
+          description: returns newly created order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDto'
+        '400':
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDto'
+        '401':
+          description: unauthorized
+  /orders/{orderId}:
+    get:
+      summary: gets order informaton
+      parameters:
+        - name: orderId
+          in: path
+          description: order identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: returns order info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDto'
+        '400':
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDto'
+        '401':
+          description: unauthorized
+components:
+  schemas:
+    CreateOrderDto:
+      type: object
+      properties:
+        OrderId:
+          type: string
+        Amount:
+          type: number
+    OrderDto:
+      type: object
+      properties:
+        OrderId:
+          type: string
+        State:
+          type: string
+        Amount:
+          type: number
+        UserId:
+          type: string
+        Username:
+          type: string
+        CreatedDate:
+          type: string
+    ErrorDto:
+      type: object
+      properties:
+        message:
+          type: string
+        id:
+          type: string
+  securitySchemes:
+    Bearer:
+      type: http
+      scheme: Bearer
