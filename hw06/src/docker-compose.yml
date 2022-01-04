@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  user-service:
+    image: andreyp123/e-shop/user-service:0.1
+    container_name: user-service
+    build:
+      context: ./
+      dockerfile: UserSvc.Api/Dockerfile
+      args:
+        VERSION: 0.0.1
+    command: migrate
+    ports:
+      - 8000:8000
+    environment:
+      - UserRepository__ConnectionString=server=postgres;port=5432;database=ShopDb;username=sa;password=sa;
+    depends_on:
+      - postgres
+
+  billing-service:
+    image: andreyp123/e-shop/billing-service:0.1
+    container_name: billing-service
+    build:
+      context: ./
+      dockerfile: BillingSvc.Api/Dockerfile
+      args:
+        VERSION: 0.0.1
+    #command: migrate
+    ports:
+      - 8000:8000
+    #environment:
+      #- UserRepository__ConnectionString=server=postgres;port=5432;database=ShopDb;username=sa;password=sa;
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:14.0-alpine
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_DB: ShopDb
+      POSTGRES_USER: sa
+      POSTGRES_PASSWORD: sa
+    volumes:
+      - ./run/postgres-data:/var/lib/postgresql/data
