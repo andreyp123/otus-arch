@@ -1,5 +1,5 @@
-using BillingSvc.Repository;
-using BillingSvc.Repository.Model;
+using NotificationSvc.Repository;
+using NotificationSvc.Repository.Model;
 using Common.Extensions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using System;
 
-namespace BillingSvc.Api
+namespace NotificationSvc.Api
 {
     public class Program
     {
@@ -30,13 +30,13 @@ namespace BillingSvc.Api
             {
                 IHost host = Host
                     .CreateDefaultBuilder(args)
-                    .ConfigureServices((_, services) => services.AddAccountRepository())
+                    .ConfigureServices((_, services) => services.AddNotificationRepository())
                     .Build();
 
                 logger = host.GetService<ILogger<Program>>();
                 logger.LogInformation("Applying migrations...");
 
-                using (var context = host.GetService<AccountDbContext>())
+                using (var context = host.GetService<NotificationDbContext>())
                 {
                     context.Database.Migrate();
                 }

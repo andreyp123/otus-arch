@@ -11,8 +11,8 @@ using UserSvc.Repository.Model;
 namespace UserSvc.Repository.Migrations
 {
     [DbContext(typeof(UserDbContext))]
-    [Migration("20211225214332_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20220107082247_CreateUsers")]
+    partial class CreateUsers
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -65,7 +65,7 @@ namespace UserSvc.Repository.Migrations
                             Email = "admin@admin",
                             PasswordHash = "jGl25bVBBBW96Qi9Te4V37Fnqchz/Eu4qB9vKrRIqRg=",
                             Roles = "Admin",
-                            UserId = "ce93b971-19a8-4ece-98cc-04f12bfa0675",
+                            UserId = "bcac79d4-48ae-4cd2-a4ae-073b0ed94c41",
                             Username = "admin"
                         });
                 });

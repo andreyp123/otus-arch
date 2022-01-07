@@ -1,5 +1,4 @@
 using Common.Authentication;
-using Common.Extensions;
 using Common.Middleware;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -8,9 +7,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using System;
-using UserSvc.Repository;
+using OrderSvc.Repository;
+using Common.Extensions;
 
-namespace UserSvc.Api
+namespace OrderSvc.Api
 {
     public class Startup
     {
@@ -27,7 +27,7 @@ namespace UserSvc.Api
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "User Service", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Order Service", Version = "v1" });
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     In = ParameterLocation.Header,
@@ -51,7 +51,7 @@ namespace UserSvc.Api
                 });
             });
 
-            services.AddUserRepository();
+            services.AddOrderRepository();
 
             services.AddTokenAuthentication();
         }
@@ -65,7 +65,7 @@ namespace UserSvc.Api
             }
 
             app.UseSwagger();
-            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Service v1"));
+            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Order Service v1"));
 
             app.UseMiddleware<ExceptionHandlingMiddleware>();
 

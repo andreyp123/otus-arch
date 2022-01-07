@@ -5,7 +5,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace UserSvc.Repository.Migrations
 {
-    public partial class InitialCreate : Migration
+    public partial class CreateUsers : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -29,7 +29,7 @@ namespace UserSvc.Repository.Migrations
             migrationBuilder.InsertData(
                 table: "Users",
                 columns: new[] { "Id", "Email", "PasswordHash", "Roles", "UserId", "Username" },
-                values: new object[] { -1, "admin@admin", "jGl25bVBBBW96Qi9Te4V37Fnqchz/Eu4qB9vKrRIqRg=", "Admin", "ce93b971-19a8-4ece-98cc-04f12bfa0675", "admin" });
+                values: new object[] { -1, "admin@admin", "jGl25bVBBBW96Qi9Te4V37Fnqchz/Eu4qB9vKrRIqRg=", "Admin", "bcac79d4-48ae-4cd2-a4ae-073b0ed94c41", "admin" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_UserId",

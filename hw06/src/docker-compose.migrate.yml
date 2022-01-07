@@ -2,64 +2,40 @@ version: '3.8'
 
 services:
 
-  user-service:
+  user-service-migrator:
     image: andreyp123/e-shop/user-service:0.1
-    container_name: user-service
-    build:
-      context: ./
-      dockerfile: UserSvc.Api/Dockerfile
-      args:
-        VERSION: 0.1.0
-    ports:
-      - 8000:8000
+    container_name: user-service-migrator
+    command: migrate
     environment:
       - UserRepository__ConnectionString=server=postgres;port=5432;database=ShopDb;username=sa;password=sa;
     depends_on:
       postgres:
         condition: service_healthy
 
-  billing-service:
+  billing-service-migrator:
     image: andreyp123/e-shop/billing-service:0.1
-    container_name: billing-service
-    build:
-      context: ./
-      dockerfile: BillingSvc.Api/Dockerfile
-      args:
-        VERSION: 0.1.0
-    ports:
-      - 8002:8002
+    container_name: billing-service-migrator
+    command: migrate
     environment:
       - AccountRepository__ConnectionString=server=postgres;port=5432;database=ShopDb;username=sa;password=sa;
     depends_on:
       postgres:
         condition: service_healthy
 
-  order-service:
+  order-service-migrator:
     image: andreyp123/e-shop/order-service:0.1
-    container_name: order-service
-    build:
-      context: ./
-      dockerfile: OrderSvc.Api/Dockerfile
-      args:
-        VERSION: 0.1.0
-    ports:
-      - 8004:8004
+    container_name: order-service-migrator
+    command: migrate
     environment:
       - OrderRepository__ConnectionString=server=postgres;port=5432;database=ShopDb;username=sa;password=sa;
     depends_on:
       postgres:
         condition: service_healthy
 
-  notification-service:
+  notification-service-migrator:
     image: andreyp123/e-shop/notification-service:0.1
-    container_name: notification-service
-    build:
-      context: ./
-      dockerfile: NotificationSvc.Api/Dockerfile
-      args:
-        VERSION: 0.1.0
-    ports:
-      - 8006:8006
+    container_name: notification-service-migrator
+    command: migrate
     environment:
       - NotificationRepository__ConnectionString=server=postgres;port=5432;database=ShopDb;username=sa;password=sa;
     depends_on:

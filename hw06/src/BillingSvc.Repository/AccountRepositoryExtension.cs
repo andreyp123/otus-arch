@@ -6,7 +6,7 @@ namespace BillingSvc.Repository
 {
     public static class AccountRepositoryExtension
     {
-        public static IServiceCollection AddAcocuntRepository(this IServiceCollection services)
+        public static IServiceCollection AddAccountRepository(this IServiceCollection services)
         {
             services.AddSingleton<AccountRepositoryConfig>();
             services.AddDbContext<AccountDbContext>(

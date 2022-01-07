@@ -7,10 +7,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using NotificationSvc.Repository;
 using System;
-using UserSvc.Repository;
 
-namespace UserSvc.Api
+namespace NotificationSvc.Api
 {
     public class Startup
     {
@@ -27,7 +27,7 @@ namespace UserSvc.Api
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "User Service", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Notification Service", Version = "v1" });
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     In = ParameterLocation.Header,
@@ -51,7 +51,7 @@ namespace UserSvc.Api
                 });
             });
 
-            services.AddUserRepository();
+            services.AddNotificationRepository();
 
             services.AddTokenAuthentication();
         }
@@ -65,7 +65,7 @@ namespace UserSvc.Api
             }
 
             app.UseSwagger();
-            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "User Service v1"));
+            app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Notification Service v1"));
 
             app.UseMiddleware<ExceptionHandlingMiddleware>();
 

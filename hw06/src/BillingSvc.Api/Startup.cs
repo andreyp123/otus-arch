@@ -1,3 +1,4 @@
+using BillingSvc.Repository;
 using Common.Authentication;
 using Common.Extensions;
 using Common.Middleware;
@@ -50,7 +51,7 @@ namespace BillingSvc.Api
                 });
             });
 
-            //services.AddAccountRepository();
+            services.AddAccountRepository();
 
             services.AddTokenAuthentication();
         }

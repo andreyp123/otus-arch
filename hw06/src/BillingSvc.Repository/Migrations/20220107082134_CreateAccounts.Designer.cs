@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BillingSvc.Repository.Migrations
 {
     [DbContext(typeof(AccountDbContext))]
-    [Migration("20220104191659_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20220107082134_CreateAccounts")]
+    partial class CreateAccounts
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {

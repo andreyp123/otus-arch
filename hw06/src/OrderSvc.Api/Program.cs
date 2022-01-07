@@ -1,5 +1,3 @@
-using BillingSvc.Repository;
-using BillingSvc.Repository.Model;
 using Common.Extensions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -7,8 +5,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using System;
+using OrderSvc.Repository;
+using OrderSvc.Repository.Model;
 
-namespace BillingSvc.Api
+namespace OrderSvc.Api
 {
     public class Program
     {
@@ -30,13 +30,13 @@ namespace BillingSvc.Api
             {
                 IHost host = Host
                     .CreateDefaultBuilder(args)
-                    .ConfigureServices((_, services) => services.AddAccountRepository())
+                    .ConfigureServices((_, services) => services.AddOrderRepository())
                     .Build();
 
                 logger = host.GetService<ILogger<Program>>();
                 logger.LogInformation("Applying migrations...");
 
-                using (var context = host.GetService<AccountDbContext>())
+                using (var context = host.GetService<OrderDbContext>())
                 {
                     context.Database.Migrate();
                 }
@@ -49,7 +49,6 @@ namespace BillingSvc.Api
                 logger.LogError(ex, "Error");
                 return -1;
             }
-            return 0;
         }
 
         private static void RunWebHost(string[] args)

@@ -8,7 +8,6 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 using System.Security.Claims;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace BillingSvc.Api.Controllers
@@ -26,7 +25,7 @@ namespace BillingSvc.Api.Controllers
             _repository = repository;
         }
 
-        [HttpPost("")]
+        [HttpPost]
         [Authorize]
         public async Task CreateAccount([FromBody] CreateAccountDto acc)
         {
@@ -46,29 +45,55 @@ namespace BillingSvc.Api.Controllers
                 HttpContext.RequestAborted);
         }
 
+        [HttpGet]
+        [Authorize]
+        public async Task<AccountDto> GetAccount()
+        {
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+            var account = await _repository.GetAccountAsync(userId, HttpContext.RequestAborted);
+            return MapAccountDto(account);
+        }
+
         [HttpPost("deposit")]
         [Authorize]
         public async Task<AccountDto> DepositAccount([FromQuery] decimal amount)
         {
-            return await UpdateBalanceAsync(amount, false, HttpContext.RequestAborted);
+            if (amount < 0)
+            {
+                throw new EShopException("Incorrect amount");
+            }
+
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+            var account = await _repository.UpdateBalanceAsync(userId, amount, HttpContext.RequestAborted);
+            return MapAccountDto(account);
         }
 
         [HttpPost("withdraw")]
         [Authorize]
         public async Task<AccountDto> WithdrawAccount([FromQuery] decimal amount)
         {
-            return await UpdateBalanceAsync(amount, true, HttpContext.RequestAborted);
-        }
-
-        private async Task<AccountDto> UpdateBalanceAsync(decimal amount, bool withdraw, CancellationToken ct)
-        {
-            if (amount <= 0)
+            if (amount < 0)
             {
                 throw new EShopException("Incorrect amount");
             }
+
+            var ct = HttpContext.RequestAborted;
             var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
 
-            var account = await _repository.UpdateBalanceAsync(userId, amount * (withdraw ? -1 : 1), ct);
+            var account = await _repository.GetAccountAsync(userId, ct);
+            if (account.Balance - amount < 0)
+            {
+                throw new EShopException("Not enough money");
+            }
+
+            account = await _repository.UpdateBalanceAsync(userId, -amount, ct);
+            return MapAccountDto(account);
+        }
+
+        private AccountDto MapAccountDto(Account account)
+        {
             return new AccountDto
             {
                 UserId = account.UserId,

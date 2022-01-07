@@ -22,13 +22,24 @@ namespace BillingSvc.Repository
             Guard.NotNullOrEmpty(account.AccountId, nameof(account.AccountId));
             Guard.NotNullOrEmpty(account.UserId, nameof(account.UserId));
 
-            if (await _dbContext.Accounts.AnyAsync(ae => ae.AccountId == account.AccountId))
+            if (await _dbContext.Accounts.AnyAsync(ae => ae.AccountId == account.AccountId || ae.UserId == account.UserId))
             {
                 throw new EShopException("Account already exists");
             }
             await _dbContext.Accounts.AddAsync(MapAccountEntity(account), ct);
+            await _dbContext.SaveChangesAsync(ct);
 
             return account.AccountId;
+        }
+
+        public async Task<Account> GetAccountAsync(string userId, CancellationToken ct = default)
+        {
+            var accountEntity = await _dbContext.Accounts.FirstOrDefaultAsync(oe => oe.UserId == userId, ct);
+            if (accountEntity == null)
+            {
+                throw new EShopException($"Account not found for user {userId}");
+            }
+            return MapAccount(accountEntity);
         }
 
         public async Task<Account> UpdateBalanceAsync(string userId, decimal amount, CancellationToken ct = default)
