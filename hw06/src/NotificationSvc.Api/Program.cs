@@ -36,7 +36,8 @@ namespace NotificationSvc.Api
                 logger = host.GetService<ILogger<Program>>();
                 logger.LogInformation("Applying migrations...");
 
-                using (var context = host.GetService<NotificationDbContext>())
+                var contextFactory = host.GetService<IDbContextFactory<NotificationDbContext>>();
+                using (var context = contextFactory.CreateDbContext())
                 {
                     context.Database.Migrate();
                 }
@@ -49,7 +50,6 @@ namespace NotificationSvc.Api
                 logger.LogError(ex, "Error");
                 return -1;
             }
-            return 0;
         }
 
         private static void RunWebHost(string[] args)

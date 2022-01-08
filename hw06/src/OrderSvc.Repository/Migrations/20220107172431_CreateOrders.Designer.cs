@@ -12,7 +12,7 @@ using OrderSvc.Repository.Model;
 namespace OrderSvc.Repository.Migrations
 {
     [DbContext(typeof(OrderDbContext))]
-    [Migration("20220107082225_CreateOrders")]
+    [Migration("20220107172431_CreateOrders")]
     partial class CreateOrders
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -39,6 +39,9 @@ namespace OrderSvc.Repository.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Data")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Message")
                         .HasColumnType("text");
 
                     b.Property<string>("OrderId")

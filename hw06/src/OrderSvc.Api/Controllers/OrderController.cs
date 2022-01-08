@@ -10,81 +10,132 @@ using System.Threading.Tasks;
 using OrderSvc.Repository;
 using Common.Model;
 using System;
+using System.Threading;
+using Common.Model.NotificationSvc;
+using Microsoft.AspNetCore.Authentication;
+using OrderSvc.Api.BillingClient;
+using OrderSvc.Api.KafkaProducer;
 
-namespace OrderSvc.Api.Controllers
+namespace OrderSvc.Api.Controllers;
+
+[ApiController]
+[Route("orders")]
+public class OrderController : ControllerBase
 {
-    [ApiController]
-    [Route("orders")]
-    public class OrderController : ControllerBase
+    private const string NOTIFICATIONS_TOPIC = "notifications";
+    
+    private readonly ILogger<OrderController> _logger;
+    private readonly IOrderRepository _repository;
+    private readonly IBillingClient _billing;
+    private readonly IKafkaProducer _kafkaProducer;
+
+    public OrderController(ILogger<OrderController> logger, IOrderRepository repository,
+        IBillingClient billing, IKafkaProducer kafkaProducer)
     {
-        private readonly ILogger<OrderController> _logger;
-        private readonly IOrderRepository _repository;
+        _logger = logger;
+        _repository = repository;
+        _billing = billing;
+        _kafkaProducer = kafkaProducer;
+    }
 
-        public OrderController(ILogger<OrderController> logger, IOrderRepository repository)
+    [HttpPost]
+    [Authorize]
+    public async Task<string> CreateOrder([FromBody] CreateOrderDto ord)
+    {
+        Guard.NotNull(ord, nameof(ord));
+
+        var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        CancellationToken ct = HttpContext.RequestAborted;
+
+        // create order
+        var order = new Order
         {
-            _logger = logger;
-            _repository = repository;
+            OrderId = IdGenerator.Generate(),
+            UserId = userId,
+            Amount = ord.Amount,
+            Data = ord.Data,
+            State = OrderState.Pending,
+            CreatedDate = DateTime.UtcNow,
+            Message = ""
+        };
+        await _repository.CreateOrderAsync(order, ct);
+        
+        // update billing
+        _billing.SetToken(await HttpContext.GetTokenAsync("access_token"));
+        try
+        {
+            var account = await _billing.WithdrawAccountAsync(ord.Amount, ct);
+            _logger.LogInformation($"Withdrawn account {account.AccountId}. Balance: {account.Balance} {account.Currency}");
+            order.Message = "Finished successfully";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error withdrawing account");
+            order.Message = $"Finished with failure. {ex.Message}";
+        }
+        
+        // update order
+        await _repository.UpdateOrderStateAsync(order.OrderId, OrderState.Finished, order.Message, ct);
+        
+        // send notification
+        Task.Run(() => _kafkaProducer.SendAsync(NOTIFICATIONS_TOPIC, PrepareMessage(order), ct));
+
+        return order.OrderId;
+    }
+
+    [HttpGet("{orderId}")]
+    [Authorize]
+    public async Task<OrderDto> GetOrder(string orderId)
+    {
+        var order = await _repository.GetOrderAsync(orderId, HttpContext.RequestAborted);
+        return MapOrderDto(order);
+    }
+
+    [HttpGet]
+    [Authorize]
+    public async Task<ListResult<OrderDto>> GetUserActiveOrders([FromQuery] int start, [FromQuery] int size)
+    {
+        var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+        (Order[] users, int total) = await _repository.GetUserOrdersAsync(userId, start, size, HttpContext.RequestAborted);
+        return new ListResult<OrderDto>(
+            users.Select(MapOrderDto).ToArray(),
+            total);
+    }
+
+    [HttpPost("{orderId}/cancel")]
+    [Authorize]
+    public async Task CancelOrder(string orderId)
+    {
+        var order = await _repository.GetOrderAsync(orderId, HttpContext.RequestAborted);
+        if (order.State != OrderState.Pending)
+        {
+            throw new EShopException("Order is not active");
         }
 
-        [HttpPost]
-        [Authorize]
-        public async Task<string> CreateOrder([FromBody] CreateOrderDto ord)
+        await _repository.UpdateOrderStateAsync(orderId, OrderState.Cancelled, "Cancelled by user", HttpContext.RequestAborted);
+    }
+
+    private OrderDto MapOrderDto(Order order)
+    {
+        return new OrderDto
         {
-            Guard.NotNull(ord, nameof(ord));
+            OrderId = order.OrderId,
+            UserId = order.UserId,
+            Amount = order.Amount,
+            Data = order.Data,
+            CreatedDate = order.CreatedDate,
+            State = order.State.ToString(),
+            Message = order.Message
+        };
+    }
 
-            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-
-            return await _repository.CreateOrderAsync(
-                new Order
-                {
-                    OrderId = IdGenerator.Generate(),
-                    UserId = userId,
-                    Amount = ord.Amount,
-                    Data = ord.Data,
-                    State = OrderState.Pending,
-                    CreatedDate = DateTime.UtcNow
-                },
-                HttpContext.RequestAborted);
-        }
-
-        [HttpGet("{orderId}")]
-        [Authorize]
-        public async Task<OrderDto> GetOrder(string orderId)
+    private NotificationMessage PrepareMessage(Order order)
+    {
+        return new NotificationMessage
         {
-            var order = await _repository.GetOrderAsync(orderId, HttpContext.RequestAborted);
-            return MapOrderDto(order);
-        }
-
-        [HttpGet]
-        [Authorize]
-        public async Task<ListResult<OrderDto>> GetUserActiveOrders([FromQuery] int start, [FromQuery] int size)
-        {
-            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-
-            (Order[] users, int total) = await _repository.GetUserActiveOrdersAsync(userId, start, size, HttpContext.RequestAborted);
-            return new ListResult<OrderDto>(
-                users.Select(o => MapOrderDto(o)).ToArray(),
-                total);
-        }
-
-        [HttpPost("{orderId}/cancel")]
-        [Authorize]
-        public async Task CancelOrder(string orderId)
-        {
-            await _repository.CancelOrderAsync(orderId, HttpContext.RequestAborted);
-        }
-
-        private OrderDto MapOrderDto(Order order)
-        {
-            return new OrderDto
-            {
-                OrderId = order.OrderId,
-                UserId = order.UserId,
-                Amount = order.Amount,
-                Data = order.Data,
-                State = order.State.ToString(),
-                CreatedDate = order.CreatedDate
-            };
-        }
+            UserId = order.UserId,
+            Data = $"Order: {order.OrderId}. Amount: {order.Amount}. Result: {order.Message}"
+        };
     }
 }

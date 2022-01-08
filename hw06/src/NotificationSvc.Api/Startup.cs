@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using NotificationSvc.Repository;
 using System;
+using NotificationSvc.Api.KafkaConsumer;
 
 namespace NotificationSvc.Api
 {
@@ -52,6 +53,7 @@ namespace NotificationSvc.Api
             });
 
             services.AddNotificationRepository();
+            services.AddKafkaConsumer();
 
             services.AddTokenAuthentication();
         }

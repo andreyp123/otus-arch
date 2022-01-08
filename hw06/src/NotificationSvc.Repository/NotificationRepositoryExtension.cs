@@ -9,15 +9,22 @@ namespace NotificationSvc.Repository
         public static IServiceCollection AddNotificationRepository(this IServiceCollection services)
         {
             services.AddSingleton<NotificationRepositoryConfig>();
-            services.AddDbContext<NotificationDbContext>(
+            services.AddDbContextFactory<NotificationDbContext>(
                 (provider, builder) =>
                 {
                     var repoConfig = provider.GetRequiredService<NotificationRepositoryConfig>();
                     builder.UseNpgsql(repoConfig.ConnectionString);
                 },
-                contextLifetime: ServiceLifetime.Scoped
-            );
-            services.AddScoped<INotificationRepository, NotificationRepository>();
+                lifetime: ServiceLifetime.Singleton);
+            // services.AddDbContext<NotificationDbContext>(
+            //     (provider, builder) =>
+            //     {
+            //         var repoConfig = provider.GetRequiredService<NotificationRepositoryConfig>();
+            //         builder.UseNpgsql(repoConfig.ConnectionString);
+            //     },
+            //     contextLifetime: ServiceLifetime.Scoped
+            // );
+            services.AddSingleton<INotificationRepository, NotificationRepository>();
 
             services.AddHealthChecks()
                 .AddCheck<NotificationRepositoryHealthCheck>(NotificationRepositoryHealthCheck.NAME);

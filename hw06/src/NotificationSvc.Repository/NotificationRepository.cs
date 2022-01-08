@@ -8,12 +8,12 @@ namespace NotificationSvc.Repository
     public class NotificationRepository : INotificationRepository
     {
         private readonly NotificationRepositoryConfig _config;
-        private readonly NotificationDbContext _dbContext;
+        private readonly IDbContextFactory<NotificationDbContext> _dbContextFactory;
 
-        public NotificationRepository(NotificationRepositoryConfig config, NotificationDbContext dbContext)
+        public NotificationRepository(NotificationRepositoryConfig config, IDbContextFactory<NotificationDbContext> dbContextFactory)
         {
             _config = config;
-            _dbContext = dbContext;
+            _dbContextFactory = dbContextFactory;
         }
 
         public async Task<string> CreateNotificationAsync(Notification notification, CancellationToken ct = default)
@@ -22,23 +22,28 @@ namespace NotificationSvc.Repository
             Guard.NotNullOrEmpty(notification.NotificationId, nameof(notification.NotificationId));
             Guard.NotNullOrEmpty(notification.UserId, nameof(notification.UserId));
 
-            if (await _dbContext.Notifications.AnyAsync(ne => ne.NotificationId == notification.NotificationId))
+            await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+
+            if (await dbContext.Notifications.AnyAsync(ne => ne.NotificationId == notification.NotificationId, ct))
             {
                 throw new EShopException("Notification already exists");
             }
-            await _dbContext.Notifications.AddAsync(MapNotificationEntity(notification), ct);
-            await _dbContext.SaveChangesAsync(ct);
+            await dbContext.Notifications.AddAsync(MapNotificationEntity(notification), ct);
+            await dbContext.SaveChangesAsync(ct);
 
             return notification.NotificationId;
         }
 
         public async Task<(Notification[], int)> GetUserNotificationsAsync(string userId, int start, int size, CancellationToken ct = default)
         {
-            var query = _dbContext.Notifications
+            await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+
+            var query = dbContext.Notifications
                 .Where(ne => ne.UserId == userId);
             var total = await query
                 .CountAsync(ct);
             var notifications = await query
+                .OrderByDescending(ne => ne.CreatedDate)
                 .Skip(start)
                 .Take(size)
                 .Select(ne => MapNotification(ne))

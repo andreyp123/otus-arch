@@ -21,7 +21,8 @@ namespace OrderSvc.Repository.Migrations
                     Data = table.Column<string>(type: "text", nullable: true),
                     UserId = table.Column<string>(type: "text", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    State = table.Column<string>(type: "text", nullable: false)
+                    State = table.Column<string>(type: "text", nullable: false),
+                    Message = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {

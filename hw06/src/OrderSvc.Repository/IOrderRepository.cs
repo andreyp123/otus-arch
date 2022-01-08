@@ -6,9 +6,9 @@ namespace OrderSvc.Repository
 {
     public interface IOrderRepository
     {
-        Task<string> CreateOrderAsync(Order order, CancellationToken ct);
-        Task<Order> GetOrderAsync(string orderId, CancellationToken ct);
-        Task<(Order[], int)> GetUserActiveOrdersAsync(string userId, int start, int size, CancellationToken ct);
-        Task CancelOrderAsync(string orderId, CancellationToken ct);
+        Task<string> CreateOrderAsync(Order order, CancellationToken ct = default);
+        Task<Order> GetOrderAsync(string orderId, CancellationToken ct = default);
+        Task<(Order[], int)> GetUserOrdersAsync(string userId, int start, int size, CancellationToken ct = default);
+        Task UpdateOrderStateAsync(string orderId, OrderState state, string message, CancellationToken ct = default);
     }
 }

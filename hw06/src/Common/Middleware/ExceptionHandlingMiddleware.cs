@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Text.Json;
+using Common.Helpers;
 using Common.Model;
 
 namespace Common.Middleware
@@ -37,7 +38,9 @@ namespace Common.Middleware
                 : (int)HttpStatusCode.InternalServerError;
 
             context.Response.ContentType = "application/json";
-            await context.Response.WriteAsync(JsonSerializer.Serialize(ErrorResult.FromException(exception)));
+            
+            await context.Response.WriteAsync(
+                JsonHelper.Serialize(ErrorResult.FromException(exception)));
         }
     }
 }

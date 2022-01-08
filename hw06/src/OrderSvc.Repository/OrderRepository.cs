@@ -47,33 +47,34 @@ namespace OrderSvc.Repository
             return MapOrder(orderEntity);
         }
 
-        public async Task<(Order[], int)> GetUserActiveOrdersAsync(string userId, int start, int size, CancellationToken ct = default)
+        public async Task<(Order[], int)> GetUserOrdersAsync(string userId, int start, int size, CancellationToken ct = default)
         {
             var query = _dbContext.Orders
-                .Where(oe => oe.UserId == userId && oe.State == OrderState.Pending.ToString());
+                .Where(oe => oe.UserId == userId);
             var total = await query
                 .CountAsync(ct);
-            var users = await query
+            var orders = await query
+                .OrderByDescending(oe => oe.CreatedDate)
                 .Skip(start)
                 .Take(size)
                 .Select(oe => MapOrder(oe))
                 .ToArrayAsync(ct);
-            return (users, total);
+            return (orders, total);
         }
 
-        public async Task CancelOrderAsync(string orderId, CancellationToken ct = default)
+        public async Task UpdateOrderStateAsync(string orderId, OrderState state, string message = null, CancellationToken ct = default)
         {
             var orderEntity = await _dbContext.Orders.FirstOrDefaultAsync(oe => oe.OrderId == orderId, ct);
             if (orderEntity == null)
             {
                 throw new EShopException($"Order {orderId} not found");
             }
-            if (orderEntity.State != OrderState.Pending.ToString())
-            {
-                throw new EShopException($"Order {orderId} is not active");
-            }
 
-            orderEntity.State = OrderState.Cancelled.ToString();
+            orderEntity.State = state.ToString();
+            if (message != null)
+            {
+                orderEntity.Message = message;
+            }
             await _dbContext.SaveChangesAsync(ct);
         }
 
@@ -86,7 +87,8 @@ namespace OrderSvc.Repository
                 Amount = o.Amount,
                 Data = o.Data,
                 CreatedDate = o.CreatedDate,
-                State = o.State.ToString()
+                State = o.State.ToString(),
+                Message = o.Message
             };
         }
 
@@ -99,7 +101,8 @@ namespace OrderSvc.Repository
                 Amount = oe.Amount,
                 Data = oe.Data,
                 CreatedDate = oe.CreatedDate,
-                State = Enum.Parse<OrderState>(oe.State)
+                State = Enum.Parse<OrderState>(oe.State),
+                Message = oe.Message
             };
         }
     }

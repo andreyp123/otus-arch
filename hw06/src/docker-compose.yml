@@ -46,6 +46,8 @@ services:
       - 8004:8004
     environment:
       - OrderRepository__ConnectionString=server=postgres;port=5432;database=ShopDb;username=sa;password=sa;
+      - BillingClient__Url=http://host.docker.internal:8002
+      - KafkaProducer__BootstrapServers=kafka:9092
     depends_on:
       postgres:
         condition: service_healthy
@@ -62,6 +64,7 @@ services:
       - 8006:8006
     environment:
       - NotificationRepository__ConnectionString=server=postgres;port=5432;database=ShopDb;username=sa;password=sa;
+      - KafkaConsumer__BootstrapServers=host.docker.internal:9092
     depends_on:
       postgres:
         condition: service_healthy
@@ -82,3 +85,35 @@ services:
       interval: 10s
       timeout: 5s
       retries: 6
+  
+  zookeeper:
+    image: docker.io/bitnami/zookeeper:3.7
+    ports:
+      - 22181:2181
+    volumes:
+      - ./run/zookeeper_data:/bitnami"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+  
+  kafka:
+    image: docker.io/bitnami/kafka:3
+    ports:
+      - 9092:9092
+    volumes:
+      - ./run/kafka_data:/bitnami"
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    depends_on:
+      - zookeeper
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 8080:8080
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+    depends_on:
+      - kafka

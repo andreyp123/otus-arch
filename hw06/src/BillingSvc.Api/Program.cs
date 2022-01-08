@@ -49,7 +49,6 @@ namespace BillingSvc.Api
                 logger.LogError(ex, "Error");
                 return -1;
             }
-            return 0;
         }
 
         private static void RunWebHost(string[] args)

@@ -9,6 +9,8 @@ using Microsoft.OpenApi.Models;
 using System;
 using OrderSvc.Repository;
 using Common.Extensions;
+using OrderSvc.Api.BillingClient;
+using OrderSvc.Api.KafkaProducer;
 
 namespace OrderSvc.Api
 {
@@ -52,6 +54,8 @@ namespace OrderSvc.Api
             });
 
             services.AddOrderRepository();
+            services.AddBillingClient();
+            services.AddKafkaProducer();
 
             services.AddTokenAuthentication();
         }
