@@ -11,6 +11,7 @@ using OrderSvc.Repository;
 using Common.Model;
 using System;
 using System.Threading;
+using System.Transactions;
 using Common.Model.NotificationSvc;
 using Microsoft.AspNetCore.Authentication;
 using OrderSvc.Api.BillingClient;
@@ -26,26 +27,40 @@ public class OrderController : ControllerBase
     
     private readonly ILogger<OrderController> _logger;
     private readonly IOrderRepository _repository;
+    private readonly IRequestRepository _reqRepository;
     private readonly IBillingClient _billing;
     private readonly IKafkaProducer _kafkaProducer;
 
     public OrderController(ILogger<OrderController> logger, IOrderRepository repository,
-        IBillingClient billing, IKafkaProducer kafkaProducer)
+        IRequestRepository reqRepository, IBillingClient billing, IKafkaProducer kafkaProducer)
     {
         _logger = logger;
         _repository = repository;
+        _reqRepository = reqRepository;
         _billing = billing;
         _kafkaProducer = kafkaProducer;
     }
 
     [HttpPost]
     [Authorize]
-    public async Task<string> CreateOrder([FromBody] CreateOrderDto ord)
+    public async Task<string> CreateOrder(
+        [FromHeader(Name = "Idempotence-Key")] string idempotenceKey,
+        [FromBody] CreateOrderDto ord)
     {
         Guard.NotNull(ord, nameof(ord));
-
+        
         var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
         CancellationToken ct = HttpContext.RequestAborted;
+        DateTime now = DateTime.UtcNow;
+        
+        using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+
+        // check request for idempotency
+        if (!string.IsNullOrEmpty(idempotenceKey) &&
+            !await _reqRepository.CheckCreateRequestAsync(idempotenceKey, "CreateOrder", now, ct))
+        {
+            throw new EShopConflictException("Idempotency error");
+        }
 
         // create order
         var order = new Order
@@ -55,10 +70,12 @@ public class OrderController : ControllerBase
             Amount = ord.Amount,
             Data = ord.Data,
             State = OrderState.Pending,
-            CreatedDate = DateTime.UtcNow,
+            CreatedDate = now,
             Message = ""
         };
         await _repository.CreateOrderAsync(order, ct);
+        
+        scope.Complete();
         
         // update billing
         _billing.SetToken(await HttpContext.GetTokenAsync("access_token"));

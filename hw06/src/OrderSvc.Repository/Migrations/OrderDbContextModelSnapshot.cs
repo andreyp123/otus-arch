@@ -61,6 +61,22 @@ namespace OrderSvc.Repository.Migrations
 
                     b.ToTable("Orders");
                 });
+
+            modelBuilder.Entity("OrderSvc.Repository.Model.RequestEntity", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id", "Name", "Date");
+
+                    b.ToTable("Requests");
+                });
 #pragma warning restore 612, 618
         }
     }

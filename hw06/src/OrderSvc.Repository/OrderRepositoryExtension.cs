@@ -19,6 +19,7 @@ namespace OrderSvc.Repository
                 contextLifetime: ServiceLifetime.Scoped
             );
             services.AddScoped<IOrderRepository, OrderRepository>();
+            services.AddScoped<IRequestRepository, RequestRepository>();
 
             services.AddHealthChecks()
                 .AddCheck<OrderRepositoryHealthCheck>(OrderRepositoryHealthCheck.NAME);

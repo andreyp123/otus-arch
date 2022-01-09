@@ -29,6 +29,19 @@ namespace OrderSvc.Repository.Migrations
                     table.PrimaryKey("PK_Orders", x => x.Id);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Requests",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Requests", x => new { x.Id, x.Name, x.Date });
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Orders_OrderId",
                 table: "Orders",
@@ -40,6 +53,9 @@ namespace OrderSvc.Repository.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Orders");
+
+            migrationBuilder.DropTable(
+                name: "Requests");
         }
     }
 }

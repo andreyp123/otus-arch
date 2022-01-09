@@ -1,11 +1,8 @@
-﻿using System;
+﻿namespace Common;
 
-namespace Common
+public class EShopException : Exception
 {
-    public class EShopException : Exception
+    public EShopException(string message) : base(message)
     {
-        public EShopException(string message) : base(message)
-        {
-        }
     }
 }

@@ -12,7 +12,7 @@ using OrderSvc.Repository.Model;
 namespace OrderSvc.Repository.Migrations
 {
     [DbContext(typeof(OrderDbContext))]
-    [Migration("20220107172431_CreateOrders")]
+    [Migration("20220109160650_CreateOrders")]
     partial class CreateOrders
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -62,6 +62,22 @@ namespace OrderSvc.Repository.Migrations
                         .IsUnique();
 
                     b.ToTable("Orders");
+                });
+
+            modelBuilder.Entity("OrderSvc.Repository.Model.RequestEntity", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id", "Name", "Date");
+
+                    b.ToTable("Requests");
                 });
 #pragma warning restore 612, 618
         }

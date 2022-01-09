@@ -5,6 +5,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using System;
+using System.Net;
+using Common;
 using OrderSvc.Repository;
 using OrderSvc.Repository.Model;
 
@@ -12,8 +14,19 @@ namespace OrderSvc.Api
 {
     public class Program
     {
+        public static int Test(Exception exception)
+        {
+            return exception switch
+            {
+                EShopConflictException => (int)HttpStatusCode.Conflict,
+                EShopException => (int)HttpStatusCode.BadRequest,
+                _ => (int)HttpStatusCode.InternalServerError
+            };
+        }
         public static int Main(string[] args)
         {
+            //Console.Write(Test(new EShopException("hi")));
+            
             if (args.Length > 0 && args[0] == "migrate")
             {
                 return RunMigration(args);

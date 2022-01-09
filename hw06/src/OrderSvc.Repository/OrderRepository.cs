@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using Common;
 using Common.Model.OrderSvc;
 using OrderSvc.Repository.Model;
@@ -27,6 +28,8 @@ namespace OrderSvc.Repository
             Guard.NotNullOrEmpty(order.OrderId, nameof(order.OrderId));
             Guard.NotNullOrEmpty(order.UserId, nameof(order.UserId));
 
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+            
             if (await _dbContext.Orders.AnyAsync(oe => oe.OrderId == order.OrderId))
             {
                 throw new EShopException("Order already exists");
@@ -34,6 +37,7 @@ namespace OrderSvc.Repository
             await _dbContext.Orders.AddAsync(MapOrderEntity(order), ct);
             await _dbContext.SaveChangesAsync(ct);
 
+            scope.Complete();
             return order.OrderId;
         }
 
@@ -64,6 +68,8 @@ namespace OrderSvc.Repository
 
         public async Task UpdateOrderStateAsync(string orderId, OrderState state, string message = null, CancellationToken ct = default)
         {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+
             var orderEntity = await _dbContext.Orders.FirstOrDefaultAsync(oe => oe.OrderId == orderId, ct);
             if (orderEntity == null)
             {
@@ -76,6 +82,8 @@ namespace OrderSvc.Repository
                 orderEntity.Message = message;
             }
             await _dbContext.SaveChangesAsync(ct);
+            
+            scope.Complete();
         }
 
         private static OrderEntity MapOrderEntity(Order o)

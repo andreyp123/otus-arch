@@ -8,7 +8,7 @@ namespace Common.Authentication
     {
         public string Issuer { get; set; } = "my-issuer";
         public string Audience { get; set; } = "my-audience";
-        public int LifetimeSec { get; set; } = 1800; // 30min
+        public int LifetimeSec { get; set; } = 18000; // 5h
         public string SigningSecret { get; set; } = "my-signing-secret"; // length >= 16
 
         public bool ValidateIssuer { get; set; } = true;

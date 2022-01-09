@@ -33,9 +33,12 @@ namespace Common.Middleware
 
         private async Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
-            context.Response.StatusCode = exception is EShopException
-                ? (int)HttpStatusCode.BadRequest
-                : (int)HttpStatusCode.InternalServerError;
+            context.Response.StatusCode = exception switch
+            {
+                EShopConflictException => (int)HttpStatusCode.Conflict,
+                EShopException => (int)HttpStatusCode.BadRequest,
+                _ => (int)HttpStatusCode.InternalServerError
+            };
 
             context.Response.ContentType = "application/json";
             
