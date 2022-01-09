@@ -2,9 +2,9 @@ version: '3.8'
 
 services:
 
-  user-service-migrator:
-    image: andreyp123/e-shop/user-service:0.1
-    container_name: user-service-migrator
+  user-svc-migrator:
+    image: andreyp123/eshop-user-svc:0.2
+    container_name: user-svc-migrator
     command: migrate
     environment:
       - UserRepository__ConnectionString=server=postgres;port=5432;database=ShopDb;username=sa;password=sa;
@@ -12,9 +12,9 @@ services:
       postgres:
         condition: service_healthy
 
-  billing-service-migrator:
-    image: andreyp123/e-shop/billing-service:0.1
-    container_name: billing-service-migrator
+  billing-svc-migrator:
+    image: andreyp123/eshop-billing-svc:0.2
+    container_name: billing-svc-migrator
     command: migrate
     environment:
       - AccountRepository__ConnectionString=server=postgres;port=5432;database=ShopDb;username=sa;password=sa;
@@ -22,9 +22,9 @@ services:
       postgres:
         condition: service_healthy
 
-  order-service-migrator:
-    image: andreyp123/e-shop/order-service:0.1
-    container_name: order-service-migrator
+  order-svc-migrator:
+    image: andreyp123/eshop-order-svc:0.2
+    container_name: order-svc-migrator
     command: migrate
     environment:
       - OrderRepository__ConnectionString=server=postgres;port=5432;database=ShopDb;username=sa;password=sa;
@@ -32,9 +32,9 @@ services:
       postgres:
         condition: service_healthy
 
-  notification-service-migrator:
-    image: andreyp123/e-shop/notification-service:0.1
-    container_name: notification-service-migrator
+  notification-svc-migrator:
+    image: andreyp123/eshop-notification-svc:0.2
+    container_name: notification-svc-migrator
     command: migrate
     environment:
       - NotificationRepository__ConnectionString=server=postgres;port=5432;database=ShopDb;username=sa;password=sa;
@@ -55,6 +55,6 @@ services:
       - ./run/postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d ShopDb -U sa"]
-      interval: 10s
+      interval: 3s
       timeout: 5s
-      retries: 6
+      retries: 10

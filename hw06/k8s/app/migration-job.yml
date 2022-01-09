@@ -1,0 +1,53 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: eshop-migration-job
+  namespace: eshop
+  labels:
+    app: eshop-migration
+spec:
+  template:
+    metadata:
+      name: eshop-migration
+      labels:
+        app: eshop-migration
+    spec:
+      restartPolicy: Never
+      containers:
+        - image: andreyp123/eshop-user-svc:0.2
+          name: user-svc-migration
+          env:
+            - name: UserRepository__ConnectionString
+              valueFrom:
+                configMapKeyRef:
+                  name: eshop-config
+                  key: DB_CONNECTION_STRING
+          command: migrate
+        - image: andreyp123/eshop-billing-svc:0.2
+          name: billing-svc-migration
+          env:
+            - name: AccountRepository__ConnectionString
+              valueFrom:
+                configMapKeyRef:
+                  name: eshop-config
+                  key: DB_CONNECTION_STRING
+          command: migrate
+        - image: andreyp123/eshop-order-svc:0.2
+          name: order-svc-migration
+          env:
+            - name: OrderRepository__ConnectionString
+              valueFrom:
+                configMapKeyRef:
+                  name: eshop-config
+                  key: DB_CONNECTION_STRING
+          command: migrate
+        - image: andreyp123/eshop-notification-svc:0.2
+          name: notification-svc-migration
+          env:
+            - name: NotificationRepository__ConnectionString
+              valueFrom:
+                configMapKeyRef:
+                  name: eshop-config
+                  key: DB_CONNECTION_STRING
+          command: migrate
+  backoffLimit: 0

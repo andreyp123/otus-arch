@@ -2,14 +2,14 @@ version: '3.8'
 
 services:
 
-  user-service:
-    image: andreyp123/e-shop/user-service:0.1
-    container_name: user-service
+  user-svc:
+    image: andreyp123/eshop-user-svc:0.2
+    container_name: user-svc
     build:
       context: ./
       dockerfile: UserSvc.Api/Dockerfile
       args:
-        VERSION: 0.1.0
+        VERSION: 0.2.0
     ports:
       - 8000:8000
     environment:
@@ -18,14 +18,14 @@ services:
       postgres:
         condition: service_healthy
 
-  billing-service:
-    image: andreyp123/e-shop/billing-service:0.1
-    container_name: billing-service
+  billing-svc:
+    image: andreyp123/eshop-billing-svc:0.2
+    container_name: billing-svc
     build:
       context: ./
       dockerfile: BillingSvc.Api/Dockerfile
       args:
-        VERSION: 0.1.0
+        VERSION: 0.2.0
     ports:
       - 8002:8002
     environment:
@@ -34,14 +34,14 @@ services:
       postgres:
         condition: service_healthy
 
-  order-service:
-    image: andreyp123/e-shop/order-service:0.1
-    container_name: order-service
+  order-svc:
+    image: andreyp123/eshop-order-svc:0.2
+    container_name: order-svc
     build:
       context: ./
       dockerfile: OrderSvc.Api/Dockerfile
       args:
-        VERSION: 0.1.0
+        VERSION: 0.2.0
     ports:
       - 8004:8004
     environment:
@@ -52,14 +52,14 @@ services:
       postgres:
         condition: service_healthy
 
-  notification-service:
-    image: andreyp123/e-shop/notification-service:0.1
-    container_name: notification-service
+  notification-svc:
+    image: andreyp123/eshop-notification-svc:0.2
+    container_name: notification-svc
     build:
       context: ./
       dockerfile: NotificationSvc.Api/Dockerfile
       args:
-        VERSION: 0.1.0
+        VERSION: 0.2.0
     ports:
       - 8006:8006
     environment:
@@ -82,9 +82,9 @@ services:
       - ./run/postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d ShopDb -U sa"]
-      interval: 10s
+      interval: 3s
       timeout: 5s
-      retries: 6
+      retries: 10
   
   zookeeper:
     image: docker.io/bitnami/zookeeper:3.7
