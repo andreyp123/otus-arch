@@ -118,7 +118,7 @@ spec:
   selector:
     matchLabels:
       app: user-svc
-  replicas: 2
+  replicas: 1
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -130,7 +130,7 @@ spec:
         app: user-svc
     spec:
       containers:            
-        - image: andreyp123/eshop-user-svc:0.2
+        - image: andreyp123/eshop-user-svc:0.3
           name: user-svc
           env:
             - name: UserRepository__ConnectionString
@@ -138,6 +138,8 @@ spec:
                 configMapKeyRef:
                   name: eshop-config
                   key: DB_CONNECTION_STRING
+            - name: UserRepository__AutoMigrate
+              value: "true"
           ports:
             - containerPort: 8000
           imagePullPolicy: IfNotPresent
@@ -169,7 +171,7 @@ spec:
   selector:
     matchLabels:
       app: billing-svc
-  replicas: 2
+  replicas: 1
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -181,7 +183,7 @@ spec:
         app: billing-svc
     spec:
       containers:            
-        - image: andreyp123/eshop-billing-svc:0.2
+        - image: andreyp123/eshop-billing-svc:0.3
           name: billing-svc
           env:
             - name: AccountRepository__ConnectionString
@@ -189,6 +191,8 @@ spec:
                 configMapKeyRef:
                   name: eshop-config
                   key: DB_CONNECTION_STRING
+            - name: AccountRepository__AutoMigrate
+              value: "true"
           ports:
             - containerPort: 8002
           imagePullPolicy: IfNotPresent
@@ -220,7 +224,7 @@ spec:
   selector:
     matchLabels:
       app: order-svc
-  replicas: 2
+  replicas: 1
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -232,7 +236,7 @@ spec:
         app: order-svc
     spec:
       containers:            
-        - image: andreyp123/eshop-order-svc:0.2
+        - image: andreyp123/eshop-order-svc:0.3
           name: order-svc
           env:
             - name: OrderRepository__ConnectionString
@@ -240,6 +244,8 @@ spec:
                 configMapKeyRef:
                   name: eshop-config
                   key: DB_CONNECTION_STRING
+            - name: OrderRepository__AutoMigrate
+              value: "true"
             - name: BillingClient__Url
               valueFrom:
                 configMapKeyRef:
@@ -281,7 +287,7 @@ spec:
   selector:
     matchLabels:
       app: notification-svc
-  replicas: 2
+  replicas: 1
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -293,7 +299,7 @@ spec:
         app: notification-svc
     spec:
       containers:            
-        - image: andreyp123/eshop-notification-svc:0.2
+        - image: andreyp123/eshop-notification-svc:0.3
           name: notification-svc
           env:
             - name: NotificationRepository__ConnectionString
@@ -301,6 +307,8 @@ spec:
                 configMapKeyRef:
                   name: eshop-config
                   key: DB_CONNECTION_STRING
+            - name: NotificationRepository__AutoMigrate
+              value: "true"
             - name: KafkaConsumer__BootstrapServers
               valueFrom:
                 configMapKeyRef:

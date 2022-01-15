@@ -5,6 +5,6 @@ metadata:
   namespace: eshop
 data:
   LOG_LEVEL: Information
-  DB_CONNECTION_STRING: server=eshop-postgresql;port=5432;database=ShopDb;username=sa;password=sa;
+  DB_CONNECTION_STRING: server=db-postgresql;port=5432;database=ShopDb;username=sa;password=sa;
   BILLING_SVC_URL: http://billing-svc:8002
-  KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+  KAFKA_BOOTSTRAP_SERVERS: brocker-kafka:9092

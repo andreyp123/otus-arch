@@ -5,6 +5,7 @@ namespace BillingSvc.Repository
     public class AccountRepositoryConfig
     {
         public string? ConnectionString { get; set; }
+        public bool AutoMigrate { get; set; }
 
         public AccountRepositoryConfig(IConfiguration configuration)
         {

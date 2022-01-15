@@ -3,49 +3,52 @@ version: '3.8'
 services:
 
   user-svc:
-    image: andreyp123/eshop-user-svc:0.2
+    image: andreyp123/eshop-user-svc:0.3
     container_name: user-svc
     build:
       context: ./
       dockerfile: UserSvc.Api/Dockerfile
       args:
-        VERSION: 0.2.0
+        VERSION: 0.3.0
     ports:
       - 8000:8000
     environment:
       - UserRepository__ConnectionString=server=postgres;port=5432;database=ShopDb;username=sa;password=sa;
+      - UserRepository__AutoMigrate=true
     depends_on:
       postgres:
         condition: service_healthy
 
   billing-svc:
-    image: andreyp123/eshop-billing-svc:0.2
+    image: andreyp123/eshop-billing-svc:0.3
     container_name: billing-svc
     build:
       context: ./
       dockerfile: BillingSvc.Api/Dockerfile
       args:
-        VERSION: 0.2.0
+        VERSION: 0.3.0
     ports:
       - 8002:8002
     environment:
       - AccountRepository__ConnectionString=server=postgres;port=5432;database=ShopDb;username=sa;password=sa;
+      - AccountRepository__AutoMigrate=true
     depends_on:
       postgres:
         condition: service_healthy
 
   order-svc:
-    image: andreyp123/eshop-order-svc:0.2
+    image: andreyp123/eshop-order-svc:0.3
     container_name: order-svc
     build:
       context: ./
       dockerfile: OrderSvc.Api/Dockerfile
       args:
-        VERSION: 0.2.0
+        VERSION: 0.3.0
     ports:
       - 8004:8004
     environment:
       - OrderRepository__ConnectionString=server=postgres;port=5432;database=ShopDb;username=sa;password=sa;
+      - OrderRepository__AutoMigrate=true
       - BillingClient__Url=http://host.docker.internal:8002
       - KafkaProducer__BootstrapServers=kafka:9092
     depends_on:
@@ -53,17 +56,18 @@ services:
         condition: service_healthy
 
   notification-svc:
-    image: andreyp123/eshop-notification-svc:0.2
+    image: andreyp123/eshop-notification-svc:0.3
     container_name: notification-svc
     build:
       context: ./
       dockerfile: NotificationSvc.Api/Dockerfile
       args:
-        VERSION: 0.2.0
+        VERSION: 0.3.0
     ports:
       - 8006:8006
     environment:
       - NotificationRepository__ConnectionString=server=postgres;port=5432;database=ShopDb;username=sa;password=sa;
+      - NotificationRepository__AutoMigrate=true
       - KafkaConsumer__BootstrapServers=host.docker.internal:9092
     depends_on:
       postgres:
@@ -94,7 +98,7 @@ services:
       - ./run/zookeeper_data:/bitnami"
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
-  
+
   kafka:
     image: docker.io/bitnami/kafka:3
     ports:

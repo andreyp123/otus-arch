@@ -34,7 +34,7 @@ namespace NotificationSvc.Api
                     .Build();
 
                 logger = host.GetService<ILogger<Program>>();
-                logger.LogInformation("Applying migrations...");
+                logger.LogInformation("Applying migrations (manual run)...");
 
                 var contextFactory = host.GetService<IDbContextFactory<NotificationDbContext>>();
                 using (var context = contextFactory.CreateDbContext())
@@ -54,13 +54,28 @@ namespace NotificationSvc.Api
 
         private static void RunWebHost(string[] args)
         {
-            Host.CreateDefaultBuilder(args)
+            IHost host = Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
                 })
-                .Build()
-                .Run();
+                .Build();
+            
+            // Auto-migrate if it is configured
+            if (host.GetService<NotificationRepositoryConfig>().AutoMigrate)
+            {
+                var logger = host.GetService<ILogger<Program>>();
+                logger.LogInformation("Applying migrations (auto run)...");
+
+                using (var context = host.GetService<NotificationDbContext>())
+                {
+                    context.Database.Migrate();
+                }
+
+                logger.LogInformation("Done");
+            }
+            
+            host.Run();
         }
     }
 }

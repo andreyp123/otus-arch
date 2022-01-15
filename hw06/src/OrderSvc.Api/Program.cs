@@ -5,8 +5,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using System;
-using System.Net;
-using Common;
 using OrderSvc.Repository;
 using OrderSvc.Repository.Model;
 
@@ -14,19 +12,8 @@ namespace OrderSvc.Api
 {
     public class Program
     {
-        public static int Test(Exception exception)
-        {
-            return exception switch
-            {
-                EShopConflictException => (int)HttpStatusCode.Conflict,
-                EShopException => (int)HttpStatusCode.BadRequest,
-                _ => (int)HttpStatusCode.InternalServerError
-            };
-        }
         public static int Main(string[] args)
         {
-            //Console.Write(Test(new EShopException("hi")));
-            
             if (args.Length > 0 && args[0] == "migrate")
             {
                 return RunMigration(args);
@@ -47,7 +34,7 @@ namespace OrderSvc.Api
                     .Build();
 
                 logger = host.GetService<ILogger<Program>>();
-                logger.LogInformation("Applying migrations...");
+                logger.LogInformation("Applying migrations (manual run)...");
 
                 using (var context = host.GetService<OrderDbContext>())
                 {
@@ -66,13 +53,28 @@ namespace OrderSvc.Api
 
         private static void RunWebHost(string[] args)
         {
-            Host.CreateDefaultBuilder(args)
+            IHost host = Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
                 })
-                .Build()
-                .Run();
+                .Build();
+            
+            // Auto-migrate if it is configured
+            if (host.GetService<OrderRepositoryConfig>().AutoMigrate)
+            {
+                var logger = host.GetService<ILogger<Program>>();
+                logger.LogInformation("Applying migrations (auto run)...");
+
+                using (var context = host.GetService<OrderDbContext>())
+                {
+                    context.Database.Migrate();
+                }
+
+                logger.LogInformation("Done");
+            }
+            
+            host.Run();
         }
     }
 }

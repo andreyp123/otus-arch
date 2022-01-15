@@ -1,4 +1,17 @@
 # https://github.com/bitnami/charts/blob/master/bitnami/postgresql/values.yaml
+
 postgresqlDatabase: ShopDb
 postgresqlUsername: sa
 postgresqlPassword: sa
+
+initdbScripts:
+  init-db.sh: |
+    #!/bin/bash
+    set -e
+    psql -v ON_ERROR_STOP=1 --username "sa" --dbname "ShopDb" <<-EOSQL
+      CREATE TABLE "__EFMigrationsHistory" (
+        "MigrationId" character varying(150) NOT NULL,
+        "ProductVersion" character varying(32) NOT NULL,
+        CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId")
+      );
+    EOSQL

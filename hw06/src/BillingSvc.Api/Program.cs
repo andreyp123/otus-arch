@@ -34,7 +34,7 @@ namespace BillingSvc.Api
                     .Build();
 
                 logger = host.GetService<ILogger<Program>>();
-                logger.LogInformation("Applying migrations...");
+                logger.LogInformation("Applying migrations (manual run)...");
 
                 using (var context = host.GetService<AccountDbContext>())
                 {
@@ -53,13 +53,28 @@ namespace BillingSvc.Api
 
         private static void RunWebHost(string[] args)
         {
-            Host.CreateDefaultBuilder(args)
+            IHost host = Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
                 })
-                .Build()
-                .Run();
+                .Build();
+            
+            // Auto-migrate if it is configured
+            if (host.GetService<AccountRepositoryConfig>().AutoMigrate)
+            {
+                var logger = host.GetService<ILogger<Program>>();
+                logger.LogInformation("Applying migrations (auto run)...");
+
+                using (var context = host.GetService<AccountDbContext>())
+                {
+                    context.Database.Migrate();
+                }
+
+                logger.LogInformation("Done");
+            }
+            
+            host.Run();
         }
     }
 }
