@@ -36,6 +36,11 @@ namespace CarSvc.Dal.Migrations
                         .HasColumnType("text")
                         .HasColumnName("alert");
 
+                    b.Property<string>("ApiKeyHash")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("api_key_hash");
+
                     b.Property<string>("BodyStyle")
                         .IsRequired()
                         .HasColumnType("text")
@@ -63,6 +68,11 @@ namespace CarSvc.Dal.Migrations
                     b.Property<int>("DoorsCount")
                         .HasColumnType("integer")
                         .HasColumnName("doors_count");
+
+                    b.Property<string>("DriveState")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("drive_state");
 
                     b.Property<string>("FuelType")
                         .IsRequired()

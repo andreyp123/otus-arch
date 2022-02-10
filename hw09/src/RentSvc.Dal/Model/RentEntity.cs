@@ -14,6 +14,8 @@ public class RentEntity
     public DateTime? EndDate { get; set; }
     public string State { get; set; }
     public string? Message { get; set; }
-    public decimal Distance { get; set; }
-    public decimal Amount { get; set; }
+    public int? StartMileage { get; set; }
+    public int? Mileage { get; set; }
+    public decimal? PricePerKm { get; set; }
+    public decimal? PricePerHour { get; set; }
 }

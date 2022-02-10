@@ -38,7 +38,7 @@ namespace BillingSvc.Api.Controllers
                 new Account
                 {
                     UserId = userId,
-                    AccountId = IdGenerator.Generate(),
+                    AccountId = Generator.GenerateId(),
                     Currency = acc?.Currency ?? "rub",
                     Balance = acc.Balance,
                     CreatedDate = DateTime.UtcNow

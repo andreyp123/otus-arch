@@ -84,10 +84,35 @@ namespace RentSvc.Dal.Repositories
             rentEntity.EndDate = rent.EndDate;
             rentEntity.State = rent.State.ToString();
             rentEntity.Message = rent.Message;
-            rentEntity.Distance = rent.Distance;
-            rentEntity.Amount = rent.Amount;
+            rentEntity.StartMileage = rent.StartMileage;
+            rentEntity.Mileage = rent.Mileage;
+            rentEntity.PricePerKm = rent.PricePerKm;
+            rentEntity.PricePerHour = rent.PricePerHour;
             
             await _dbContext.SaveChangesAsync(ct);
+            scope.Complete();
+        }
+
+        public async Task UpdateActiveRentAsync(string carId, int? mileage, CancellationToken ct = default)
+        {
+            if (!mileage.HasValue)
+                return;
+
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+
+            var rentEntity = await _dbContext.Rents.FirstOrDefaultAsync(
+                re => re.CarId == carId &&
+                      re.State == RentState.Started.ToString() &&
+                      re.StartDate != null &&
+                      re.EndDate == null &&
+                      re.StartMileage != null,
+                ct);
+            if (rentEntity != null)
+            {
+                rentEntity.Mileage = mileage.Value;
+                await _dbContext.SaveChangesAsync(ct);
+            }
+            
             scope.Complete();
         }
 
@@ -104,8 +129,10 @@ namespace RentSvc.Dal.Repositories
                 EndDate = r.EndDate,
                 State = r.State.ToString(),
                 Message = r.Message,
-                Distance = r.Distance,
-                Amount = r.Amount,
+                StartMileage = r.StartMileage,
+                Mileage = r.Mileage,
+                PricePerKm = r.PricePerKm,
+                PricePerHour = r.PricePerHour
             };
         }
 
@@ -122,8 +149,10 @@ namespace RentSvc.Dal.Repositories
                 EndDate = re.EndDate,
                 State = Enum.Parse<RentState>(re.State),
                 Message = re.Message,
-                Distance = re.Distance,
-                Amount = re.Amount
+                StartMileage = re.StartMileage,
+                Mileage = re.Mileage,
+                PricePerKm = re.PricePerKm,
+                PricePerHour = re.PricePerHour
             };
         }
     }

@@ -13,6 +13,7 @@ public class CarDto
     public string? FuelType { get; set; }
     public decimal PricePerKm { get; set; }
     public decimal PricePerHour { get; set; }
+    public string DriveState { get; set; }
     public int Mileage { get; set; }
     public decimal LocationLat { get; set; }
     public decimal LocationLon { get; set; }

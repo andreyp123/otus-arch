@@ -35,7 +35,7 @@ public class UserProfileController : ControllerBase
         await _repository.CreateUserAsync(
             new User
             {
-                UserId = IdGenerator.Generate(),
+                UserId = Generator.GenerateId(),
                 Username = profile.Username,
                 FullName = profile.FullName,
                 Email = profile.Email,

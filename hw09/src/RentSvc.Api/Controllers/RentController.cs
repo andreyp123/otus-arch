@@ -61,15 +61,13 @@ public class RentController : ControllerBase
         // create rent
         var rent = new Rent
         {
-            RentId = IdGenerator.Generate(),
+            RentId = Generator.GenerateId(),
             UserId = userId,
             CarId = startRent.CarId,
             Data = startRent.Data,
             State = RentState.Starting,
             CreatedDate = now,
-            Message = "",
-            Distance = 0,
-            Amount = 0
+            Message = ""
         };
         await _repository.CreateRentAsync(rent, ct);
         
@@ -95,7 +93,7 @@ public class RentController : ControllerBase
     public async Task<RentDto> GetRent(string rentId)
     {
         var rent = await _repository.GetRentAsync(rentId, HttpContext.RequestAborted);
-        return MapRentDto(rent);
+        return MapRentDto(rent, true);
     }
 
     [HttpGet]
@@ -106,7 +104,7 @@ public class RentController : ControllerBase
 
         (Rent[] users, int total) = await _repository.GetUserRentsAsync(userId, start, size, HttpContext.RequestAborted);
         return new ListResult<RentDto>(
-            users.Select(MapRentDto).ToArray(),
+            users.Select(r => MapRentDto(r, false)).ToArray(),
             total);
     }
 
@@ -127,9 +125,9 @@ public class RentController : ControllerBase
         await _repository.UpdateRentAsync(rentId, rent, HttpContext.RequestAborted);
     }
 
-    private RentDto MapRentDto(Rent rent)
+    private RentDto MapRentDto(Rent rent, bool full = false)
     {
-        return new RentDto
+        var rentDto = new RentDto
         {
             RentId = rent.RentId,
             UserId = rent.UserId,
@@ -139,10 +137,41 @@ public class RentController : ControllerBase
             StartDate = rent.StartDate,
             EndDate = rent.EndDate,
             State = rent.State.ToString(),
-            Message = rent.Message,
-            Distance = rent.Distance,
-            Amount = rent.Amount
+            Message = rent.Message
         };
+
+        if (full)
+        {
+            DateTime now = DateTime.UtcNow;
+            rentDto.Distance = CalcDistance(rent);
+            rentDto.Amount = CalcAmount(rent, now);
+        }
+
+        return rentDto;
+    }
+
+    private decimal? CalcDistance(Rent rent)
+    {
+        return rent.StartMileage != null && rent.Mileage != null
+            ? rent.Mileage - rent.StartMileage
+            : null;
+    }
+
+    private decimal? CalcAmount(Rent rent, DateTime now)
+    {
+        if (rent.PricePerKm == null || rent.PricePerHour == null)
+            return null;
+        
+        var distance = CalcDistance(rent);
+        if (!distance.HasValue)
+            return null;
+        
+        if (!rent.StartDate.HasValue)
+            return null;
+
+        var hours = (decimal)((rent.EndDate ?? now) - rent.StartDate.Value).TotalHours;
+
+        return rent.PricePerHour * hours + rent.PricePerKm * distance;
     }
 
     private ProducedEvent<NotificationMessage> PrepareNotificationEvent(Rent rent)

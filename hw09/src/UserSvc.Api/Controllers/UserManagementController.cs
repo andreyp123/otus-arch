@@ -35,7 +35,7 @@ public class UserManagementController : ControllerBase
         return await _repository.CreateUserAsync(
             new User
             {
-                UserId = IdGenerator.Generate(),
+                UserId = Generator.GenerateId(),
                 Username = user.Username,
                 FullName = user.FullName,
                 Email = user.Email,

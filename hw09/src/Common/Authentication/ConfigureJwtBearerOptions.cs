@@ -2,38 +2,37 @@
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Common.Authentication
+namespace Common.Authentication;
+
+public class ConfigureJwtBearerOptions : IConfigureNamedOptions<JwtBearerOptions>
 {
-    public class ConfigureJwtBearerOptions : IConfigureNamedOptions<JwtBearerOptions>
+    private readonly TokenConfig _tokenConfig;
+
+    public ConfigureJwtBearerOptions(TokenConfig tokenConfig)
     {
-        private readonly TokenConfig _tokenConfig;
+        _tokenConfig = tokenConfig;
+    }
 
-        public ConfigureJwtBearerOptions(TokenConfig tokenConfig)
+    public void Configure(string name, JwtBearerOptions options)
+    {
+        if (name == JwtBearerDefaults.AuthenticationScheme)
         {
-            _tokenConfig = tokenConfig;
-        }
-
-        public void Configure(string name, JwtBearerOptions options)
-        {
-            if (name == JwtBearerDefaults.AuthenticationScheme)
+            options.RequireHttpsMetadata = false;
+            options.TokenValidationParameters = new TokenValidationParameters
             {
-                options.RequireHttpsMetadata = false;
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = _tokenConfig.ValidateIssuer,
-                    ValidIssuer = _tokenConfig.Issuer,
-                    ValidateAudience = _tokenConfig.ValidateAudience,
-                    ValidAudience = _tokenConfig.Audience,
-                    ValidateLifetime = _tokenConfig.ValidateLifetime,
-                    IssuerSigningKey = _tokenConfig.SigningKey,
-                    ValidateIssuerSigningKey = _tokenConfig.ValidateSigningKey,
-                };
-            }
+                ValidateIssuer = _tokenConfig.ValidateIssuer,
+                ValidIssuer = _tokenConfig.Issuer,
+                ValidateAudience = _tokenConfig.ValidateAudience,
+                ValidAudience = _tokenConfig.Audience,
+                ValidateLifetime = _tokenConfig.ValidateLifetime,
+                IssuerSigningKey = _tokenConfig.SigningKey,
+                ValidateIssuerSigningKey = _tokenConfig.ValidateSigningKey,
+            };
         }
+    }
 
-        public void Configure(JwtBearerOptions options)
-        {
-            Configure(string.Empty, options);
-        }
+    public void Configure(JwtBearerOptions options)
+    {
+        Configure(string.Empty, options);
     }
 }

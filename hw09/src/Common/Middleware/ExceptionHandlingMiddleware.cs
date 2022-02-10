@@ -5,45 +5,44 @@ using System.Text.Json;
 using Common.Helpers;
 using Common.Model;
 
-namespace Common.Middleware
+namespace Common.Middleware;
+
+public sealed class ExceptionHandlingMiddleware
 {
-    public sealed class ExceptionHandlingMiddleware
+    private readonly RequestDelegate _next;
+    private readonly ILogger<ExceptionHandlingMiddleware> _logger;
+
+    public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
     {
-        private readonly RequestDelegate _next;
-        private readonly ILogger<ExceptionHandlingMiddleware> _logger;
+        _next = next;
+        _logger = logger;
+    }
 
-        public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
+    public async Task Invoke(HttpContext context)
+    {
+        try
         {
-            _next = next;
-            _logger = logger;
+            await _next.Invoke(context);
         }
-
-        public async Task Invoke(HttpContext context)
+        catch (Exception ex)
         {
-            try
-            {
-                await _next.Invoke(context);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occurred");
-                await HandleExceptionAsync(context, ex);
-            }
+            _logger.LogError(ex, "Error occurred");
+            await HandleExceptionAsync(context, ex);
         }
+    }
 
-        private async Task HandleExceptionAsync(HttpContext context, Exception exception)
+    private async Task HandleExceptionAsync(HttpContext context, Exception exception)
+    {
+        context.Response.StatusCode = exception switch
         {
-            context.Response.StatusCode = exception switch
-            {
-                CrashConflictException => (int)HttpStatusCode.Conflict,
-                CrashException => (int)HttpStatusCode.BadRequest,
-                _ => (int)HttpStatusCode.InternalServerError
-            };
+            CrashConflictException => (int) HttpStatusCode.Conflict,
+            CrashException => (int) HttpStatusCode.BadRequest,
+            _ => (int) HttpStatusCode.InternalServerError
+        };
 
-            context.Response.ContentType = "application/json";
-            
-            await context.Response.WriteAsync(
-                JsonHelper.Serialize(ErrorResult.FromException(exception)));
-        }
+        context.Response.ContentType = "application/json";
+
+        await context.Response.WriteAsync(
+            JsonHelper.Serialize(ErrorResult.FromException(exception)));
     }
 }

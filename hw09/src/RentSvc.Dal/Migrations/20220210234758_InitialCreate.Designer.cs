@@ -12,7 +12,7 @@ using RentSvc.Dal.Model;
 namespace RentSvc.Dal.Migrations
 {
     [DbContext(typeof(RentDbContext))]
-    [Migration("20220206192817_InitialCreate")]
+    [Migration("20220210234758_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -34,10 +34,6 @@ namespace RentSvc.Dal.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("numeric")
-                        .HasColumnName("amount");
-
                     b.Property<string>("CarId")
                         .IsRequired()
                         .HasColumnType("text")
@@ -52,10 +48,6 @@ namespace RentSvc.Dal.Migrations
                         .HasColumnType("text")
                         .HasColumnName("data");
 
-                    b.Property<decimal>("Distance")
-                        .HasColumnType("numeric")
-                        .HasColumnName("distance");
-
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("end_date");
@@ -63,6 +55,18 @@ namespace RentSvc.Dal.Migrations
                     b.Property<string>("Message")
                         .HasColumnType("text")
                         .HasColumnName("message");
+
+                    b.Property<int?>("Mileage")
+                        .HasColumnType("integer")
+                        .HasColumnName("mileage");
+
+                    b.Property<decimal?>("PricePerHour")
+                        .HasColumnType("numeric")
+                        .HasColumnName("price_per_hour");
+
+                    b.Property<decimal?>("PricePerKm")
+                        .HasColumnType("numeric")
+                        .HasColumnName("price_per_km");
 
                     b.Property<string>("RentId")
                         .IsRequired()
@@ -72,6 +76,10 @@ namespace RentSvc.Dal.Migrations
                     b.Property<DateTime?>("StartDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("start_date");
+
+                    b.Property<int?>("StartMileage")
+                        .HasColumnType("integer")
+                        .HasColumnName("start_mileage");
 
                     b.Property<string>("State")
                         .IsRequired()

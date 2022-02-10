@@ -21,6 +21,7 @@ public class CarEntity
     public decimal PricePerHour { get; set; }
 
     // State
+    public string DriveState { get; set; }
     public int Mileage { get; set; }
     public decimal LocationLat { get; set; }
     public decimal LocationLon { get; set; }
@@ -28,6 +29,7 @@ public class CarEntity
     public string? Alert { get; set; }
 
     // Technical fields
+    public string ApiKeyHash { get; set; }
     public DateTime CreatedDate { get; set; }
     public DateTime ModifiedDate { get; set; }
 

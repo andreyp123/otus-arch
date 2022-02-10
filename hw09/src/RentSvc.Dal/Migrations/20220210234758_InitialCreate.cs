@@ -29,8 +29,10 @@ namespace RentSvc.Dal.Migrations
                     end_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     state = table.Column<string>(type: "text", nullable: false),
                     message = table.Column<string>(type: "text", nullable: true),
-                    distance = table.Column<decimal>(type: "numeric", nullable: false),
-                    amount = table.Column<decimal>(type: "numeric", nullable: false)
+                    start_mileage = table.Column<int>(type: "integer", nullable: true),
+                    mileage = table.Column<int>(type: "integer", nullable: true),
+                    price_per_km = table.Column<decimal>(type: "numeric", nullable: true),
+                    price_per_hour = table.Column<decimal>(type: "numeric", nullable: true)
                 },
                 constraints: table =>
                 {

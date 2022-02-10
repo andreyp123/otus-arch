@@ -10,6 +10,7 @@ using System;
 using Common.Events.Producer;
 using RentSvc.Dal;
 using Common.Extensions;
+using RentSvc.Api.EventHandlers;
 
 namespace RentSvc.Api
 {
@@ -54,6 +55,7 @@ namespace RentSvc.Api
 
             services.AddRentDal();
             services.AddEventProducer();
+            services.AddEventHandling();
 
             services.AddTokenAuthentication();
         }

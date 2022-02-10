@@ -43,7 +43,7 @@ public class UserDbContext : DbContext
                 new UserEntity
                 {
                     Id = -1,
-                    UserId = IdGenerator.Generate(),
+                    UserId = Generator.GenerateId(),
                     Username = "admin",
                     Email = "admin@admin",
                     PasswordHash = Hasher.CalculateHash("admin"),

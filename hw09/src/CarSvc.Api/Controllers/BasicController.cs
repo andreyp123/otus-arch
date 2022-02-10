@@ -4,32 +4,31 @@ using Microsoft.AspNetCore.Authorization;
 using Common.Model;
 using Common.Helpers;
 
-namespace CarSvc.Api.Controllers
+namespace CarSvc.Api.Controllers;
+
+[ApiController]
+public class BasicController : ControllerBase
 {
-    [ApiController]
-    public class BasicController : ControllerBase
+    private readonly ILogger<BasicController> _logger;
+    private readonly VersionInfo _versionInfo;
+
+    public BasicController(ILogger<BasicController> logger)
     {
-        private readonly ILogger<BasicController> _logger;
-        private readonly VersionInfo _versionInfo;
+        _logger = logger;
+        _versionInfo = VersionHelper.GetVersionInfo();
+    }
 
-        public BasicController(ILogger<BasicController> logger)
-        {
-            _logger = logger;
-            _versionInfo = VersionHelper.GetVersionInfo();
-        }
+    [HttpGet("")]
+    [AllowAnonymous]
+    public string Hello()
+    {
+        return $"Hello from Car Service!";
+    }
 
-        [HttpGet("")]
-        [AllowAnonymous]
-        public string Hello()
-        {
-            return $"Hello from Car Service!";
-        }
-
-        [HttpGet("version")]
-        [AllowAnonymous]
-        public VersionInfo GetVersion()
-        {
-            return _versionInfo;
-        }
+    [HttpGet("version")]
+    [AllowAnonymous]
+    public VersionInfo GetVersion()
+    {
+        return _versionInfo;
     }
 }

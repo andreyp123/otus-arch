@@ -39,7 +39,7 @@ public class NotificationEventHandler : IEventHandler
             await _repository.CreateNotificationAsync(
                 new Notification
                 {
-                    NotificationId = IdGenerator.Generate(),
+                    NotificationId = Generator.GenerateId(),
                     UserId = ntfMessage.UserId,
                     Data = ntfMessage.Data,
                     CreatedDate = DateTime.UtcNow

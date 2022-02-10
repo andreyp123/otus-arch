@@ -2,21 +2,20 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-namespace Common.Authentication
+namespace Common.Authentication;
+
+public static class TokenAuthenticationExtension
 {
-    public static class TokenAuthenticationExtension
+    public static IServiceCollection AddTokenAuthentication(
+        this IServiceCollection services)
     {
-        public static IServiceCollection AddTokenAuthentication(
-            this IServiceCollection services)
-        {
-            services.AddSingleton<TokenConfig>();
+        services.AddSingleton<TokenConfig>();
 
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, configureOptions: null);
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, configureOptions: null);
 
-            services.AddSingleton<IConfigureOptions<JwtBearerOptions>, ConfigureJwtBearerOptions>();
+        services.AddSingleton<IConfigureOptions<JwtBearerOptions>, ConfigureJwtBearerOptions>();
 
-            return services;
-        }
+        return services;
     }
 }

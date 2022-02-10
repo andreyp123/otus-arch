@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CarSvc.Dal.Migrations
 {
     [DbContext(typeof(CarDbContext))]
-    [Migration("20220206192854_InitialCreate")]
+    [Migration("20220210234743_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -37,6 +37,11 @@ namespace CarSvc.Dal.Migrations
                     b.Property<string>("Alert")
                         .HasColumnType("text")
                         .HasColumnName("alert");
+
+                    b.Property<string>("ApiKeyHash")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("api_key_hash");
 
                     b.Property<string>("BodyStyle")
                         .IsRequired()
@@ -65,6 +70,11 @@ namespace CarSvc.Dal.Migrations
                     b.Property<int>("DoorsCount")
                         .HasColumnType("integer")
                         .HasColumnName("doors_count");
+
+                    b.Property<string>("DriveState")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("drive_state");
 
                     b.Property<string>("FuelType")
                         .IsRequired()

@@ -2,14 +2,13 @@
 using System.Net;
 using System.Reflection;
 
-namespace Common.Helpers
+namespace Common.Helpers;
+
+public static class VersionHelper
 {
-    public static class VersionHelper
+    public static VersionInfo GetVersionInfo() => new VersionInfo
     {
-        public static VersionInfo GetVersionInfo() => new VersionInfo
-        {
-            Version = Assembly.GetExecutingAssembly().GetName().Version.ToString(),
-            Hostname = Dns.GetHostName()
-        };
-    }
+        Version = Assembly.GetExecutingAssembly().GetName().Version.ToString(),
+        Hostname = Dns.GetHostName()
+    };
 }

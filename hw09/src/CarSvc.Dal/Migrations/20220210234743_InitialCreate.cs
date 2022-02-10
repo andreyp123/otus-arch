@@ -31,11 +31,13 @@ namespace CarSvc.Dal.Migrations
                     fuel_type = table.Column<string>(type: "text", nullable: false),
                     price_per_km = table.Column<decimal>(type: "numeric", nullable: false),
                     price_per_hour = table.Column<decimal>(type: "numeric", nullable: false),
+                    drive_state = table.Column<string>(type: "text", nullable: false),
                     mileage = table.Column<int>(type: "integer", nullable: false),
                     location_lat = table.Column<decimal>(type: "numeric", nullable: false),
                     location_lon = table.Column<decimal>(type: "numeric", nullable: false),
                     remaining_fuel = table.Column<decimal>(type: "numeric", nullable: false),
                     alert = table.Column<string>(type: "text", nullable: true),
+                    api_key_hash = table.Column<string>(type: "text", nullable: false),
                     created_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     modified_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },

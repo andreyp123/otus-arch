@@ -15,12 +15,14 @@ public class Car
     public decimal PricePerKm { get; set; }
     public decimal PricePerHour { get; set; }
         
+    public CarDriveState DriveState { get; set; }
     public int Mileage { get; set; }
     public decimal LocationLat { get; set; }
     public decimal LocationLon { get; set; }
     public decimal RemainingFuel { get; set; }
     public string? Alert { get; set; }
         
+    public string? ApiKeyHash { get; set; }
     public DateTime CreatedDate { get; set; }
     public DateTime ModifiedDate { get; set; }
     

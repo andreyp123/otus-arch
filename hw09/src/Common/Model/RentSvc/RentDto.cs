@@ -11,6 +11,6 @@ public class RentDto
     public DateTime? EndDate { get; set; }
     public string? State { get; set; }
     public string? Message { get; set; }
-    public decimal Distance { get; set; } = 0;
-    public decimal Amount { get; set; } = 0;
+    public decimal? Distance { get; set; } = 0;
+    public decimal? Amount { get; set; } = 0;
 }
