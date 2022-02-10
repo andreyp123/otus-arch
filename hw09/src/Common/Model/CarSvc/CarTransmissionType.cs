@@ -1,6 +1,6 @@
 namespace Common.Model.CarSvc;
 
-public enum CarTransmissionTypes
+public enum CarTransmissionType
 {
     Unknown = 0,
     Automatic,

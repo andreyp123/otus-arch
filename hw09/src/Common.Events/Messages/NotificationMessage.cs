@@ -1,4 +1,4 @@
-namespace Common.Model.NotificationSvc;
+namespace Common.Events.Messages;
 
 public class NotificationMessage
 {

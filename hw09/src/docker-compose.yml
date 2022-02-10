@@ -49,7 +49,7 @@ services:
     environment:
       - RentDal__ConnectionString=server=postgres;port=5432;database=CrashDb;username=sa;password=sa;
       - RentDal__AutoMigrate=true
-      - KafkaProducer__BootstrapServers=kafka:9092
+      - EventProducer__BootstrapServers=kafka:9092
     depends_on:
       postgres:
         condition: service_healthy
@@ -67,7 +67,7 @@ services:
     environment:
       - NotificationDal__ConnectionString=server=postgres;port=5432;database=CrashDb;username=sa;password=sa;
       - NotificationDal__AutoMigrate=true
-      - KafkaConsumer__BootstrapServers=host.docker.internal:9092
+      - EventConsumer__BootstrapServers=host.docker.internal:9092
     depends_on:
       postgres:
         condition: service_healthy

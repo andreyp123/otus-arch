@@ -1,6 +1,6 @@
 namespace Common.Model.CarSvc;
 
-public enum CarFuelTypes
+public enum CarFuelType
 {
     Unknown = 0,
     Diesel,

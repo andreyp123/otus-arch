@@ -11,8 +11,9 @@ using Common.Model;
 using System;
 using System.Threading;
 using System.Transactions;
-using Common.Model.NotificationSvc;
-using RentSvc.Api.KafkaProducer;
+using Common.Events;
+using Common.Events.Messages;
+using Common.Events.Producer;
 using RentSvc.Dal.Repositories;
 
 namespace RentSvc.Api.Controllers;
@@ -21,20 +22,18 @@ namespace RentSvc.Api.Controllers;
 [Route("rents")]
 public class RentController : ControllerBase
 {
-    private const string NOTIFICATIONS_TOPIC = "notifications";
-    
     private readonly ILogger<RentController> _logger;
     private readonly IRentRepository _repository;
     private readonly IRequestRepository _reqRepository;
-    private readonly IKafkaProducer _kafkaProducer;
+    private readonly IEventProducer _eventProducer;
 
     public RentController(ILogger<RentController> logger, IRentRepository repository,
-        IRequestRepository reqRepository, IKafkaProducer kafkaProducer)
+        IRequestRepository reqRepository, IEventProducer eventProducer)
     {
         _logger = logger;
         _repository = repository;
         _reqRepository = reqRepository;
-        _kafkaProducer = kafkaProducer;
+        _eventProducer = eventProducer;
     }
 
     [HttpPost]
@@ -86,7 +85,7 @@ public class RentController : ControllerBase
         await _repository.UpdateRentAsync(rent.RentId, rent, HttpContext.RequestAborted);
         
         // send notification
-        Task.Run(() => _kafkaProducer.SendAsync(NOTIFICATIONS_TOPIC, PrepareMessage(rent), ct));
+        Task.Run(() => _eventProducer.ProduceEventAsync(Topics.Notifications, PrepareNotificationEvent(rent), ct));
 
         return rent.RentId;
     }
@@ -146,12 +145,16 @@ public class RentController : ControllerBase
         };
     }
 
-    private NotificationMessage PrepareMessage(Rent rent)
+    private ProducedEvent<NotificationMessage> PrepareNotificationEvent(Rent rent)
     {
-        return new NotificationMessage
+        return new()
         {
-            UserId = rent.UserId,
-            Data = $"Rent: {rent.RentId}"
+            Type = EventType.Notification,
+            Payload = new NotificationMessage
+            {
+                UserId = rent.UserId,
+                Data = $"Rent: {rent.RentId}"
+            }
         };
     }
 }

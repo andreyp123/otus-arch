@@ -9,7 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using NotificationSvc.Dal;
 using System;
-using NotificationSvc.Api.KafkaConsumer;
+using NotificationSvc.Api.EventHandlers;
 
 namespace NotificationSvc.Api
 {
@@ -53,7 +53,7 @@ namespace NotificationSvc.Api
             });
 
             services.AddNotificationDal();
-            services.AddKafkaConsumer();
+            services.AddEventHandling();
 
             services.AddTokenAuthentication();
         }

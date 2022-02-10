@@ -1,6 +1,6 @@
 namespace Common.Model.CarSvc;
 
-public enum CarBodyStyles
+public enum CarBodyStyle
 {
     Unknown = 0,
     Convertible,

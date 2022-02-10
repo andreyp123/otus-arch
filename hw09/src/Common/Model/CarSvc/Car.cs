@@ -7,10 +7,10 @@ public class Car
     public string? Model { get; set; }
     public string? Color { get; set; }
     public DateTime ReleaseDate { get; set; }
-    public CarBodyStyles BodyStyle { get; set; }
+    public CarBodyStyle BodyStyle { get; set; }
     public int DoorsCount { get; set; }
-    public CarTransmissionTypes Transmission { get; set; }
-    public CarFuelTypes FuelType { get; set; }
+    public CarTransmissionType Transmission { get; set; }
+    public CarFuelType FuelType { get; set; }
         
     public decimal PricePerKm { get; set; }
     public decimal PricePerHour { get; set; }

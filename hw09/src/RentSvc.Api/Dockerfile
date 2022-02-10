@@ -3,6 +3,7 @@ ARG VERSION=0.0.1
 
 WORKDIR /src
 COPY ["Common/Common.csproj", "Common/"]
+COPY ["Common.Events/Common.Events.csproj", "Common.Events/"]
 COPY ["RentSvc.Dal/RentSvc.Dal.csproj", "RentSvc.Dal/"]
 COPY ["RentSvc.Api/RentSvc.Api.csproj", "RentSvc.Api/"]
 RUN dotnet restore "RentSvc.Api/RentSvc.Api.csproj"

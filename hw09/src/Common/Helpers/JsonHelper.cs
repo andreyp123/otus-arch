@@ -1,11 +1,12 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace Common.Helpers;
 
 public static class JsonHelper
 {
-    public static JsonSerializerOptions? Options { get; } =
-        new JsonSerializerOptions
+    private static JsonSerializerOptions? Options { get; } =
+        new()
         {
             PropertyNameCaseInsensitive = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
@@ -19,5 +20,10 @@ public static class JsonHelper
     public static TValue? Deserialize<TValue>(string json)
     {
         return JsonSerializer.Deserialize<TValue>(json, Options);
+    }
+    
+    public static TValue? Deserialize<TValue>(JsonObject jsonObj)
+    {
+        return jsonObj.Deserialize<TValue>(Options);
     }
 }

@@ -7,9 +7,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using System;
+using Common.Events.Producer;
 using RentSvc.Dal;
 using Common.Extensions;
-using RentSvc.Api.KafkaProducer;
 
 namespace RentSvc.Api
 {
@@ -53,7 +53,7 @@ namespace RentSvc.Api
             });
 
             services.AddRentDal();
-            services.AddKafkaProducer();
+            services.AddEventProducer();
 
             services.AddTokenAuthentication();
         }
