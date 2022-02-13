@@ -7,17 +7,21 @@ namespace NotificationSvc.Dal
     {
         public const string NAME = "DB";
 
-        private string? _connectionString;
+        private NpgSqlHealthCheck _check;
 
         public NotificationDalHealthCheck(NotificationDalConfig config)
         {
-            _connectionString = config.ConnectionString;
+            _check = new NpgSqlHealthCheck(config.ConnectionString, "select count(*) from notification_svc.notifications");
         }
 
-        public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
+        public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context,
+            CancellationToken cancellationToken = default)
         {
-            var postgresCheck = new NpgSqlHealthCheck(_connectionString, "select count(*) from notifications");
-            return await postgresCheck.CheckHealthAsync(context, cancellationToken);
+            var lts = CancellationTokenSource.CreateLinkedTokenSource(
+                new CancellationTokenSource(TimeSpan.FromSeconds(5)).Token,
+                cancellationToken);
+            
+            return await _check.CheckHealthAsync(context, lts.Token);
         }
     }
 }

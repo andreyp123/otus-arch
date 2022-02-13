@@ -11,16 +11,23 @@ namespace RentSvc.Dal
             this IServiceCollection services)
         {
             services.AddSingleton<RentDalConfig>();
-            services.AddDbContext<RentDbContext>(
+            services.AddDbContextFactory<RentDbContext>(
                 (provider, builder) =>
                 {
                     var repoConfig = provider.GetRequiredService<RentDalConfig>();
                     builder.SetUpRentDbContext(repoConfig.ConnectionString);
                 },
-                contextLifetime: ServiceLifetime.Scoped
-            );
-            services.AddScoped<IRentRepository, RentRepository>();
-            services.AddScoped<IRequestRepository, RequestRepository>();
+                lifetime: ServiceLifetime.Scoped);
+            // services.AddDbContext<RentDbContext>(
+            //     (provider, builder) =>
+            //     {
+            //         var repoConfig = provider.GetRequiredService<RentDalConfig>();
+            //         builder.SetUpRentDbContext(repoConfig.ConnectionString);
+            //     },
+            //     contextLifetime: ServiceLifetime.Scoped
+            // );
+            services.AddSingleton<IRentRepository, RentRepository>();
+            services.AddSingleton<IRequestRepository, RequestRepository>();
 
             services.AddHealthChecks()
                 .AddCheck<RentDalHealthCheck>(RentDalHealthCheck.NAME);

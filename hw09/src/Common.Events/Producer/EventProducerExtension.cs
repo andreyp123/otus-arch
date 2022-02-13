@@ -7,7 +7,11 @@ public static class EventProducerExtension
     public static IServiceCollection AddEventProducer(this IServiceCollection services)
     {
         services.AddSingleton<EventProducerConfig>();
-        services.AddScoped<IEventProducer, EventProducer>();
+        services.AddSingleton<IEventProducer, EventProducer>();
+
+        services.AddHealthChecks()
+            .AddCheck<EventProducerHealthCheck>(EventProducerHealthCheck.NAME);
+        
         return services;
     }
 }

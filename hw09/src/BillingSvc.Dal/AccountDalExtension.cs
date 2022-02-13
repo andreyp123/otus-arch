@@ -10,14 +10,21 @@ namespace BillingSvc.Dal
         public static IServiceCollection AddAccountDal(this IServiceCollection services)
         {
             services.AddSingleton<AccountDalConfig>();
-            services.AddDbContext<AccountDbContext>(
+            services.AddDbContextFactory<AccountDbContext>(
                 (provider, builder) =>
                 {
                     var repoConfig = provider.GetRequiredService<AccountDalConfig>();
                     builder.SetUpAccountDbContext(repoConfig.ConnectionString);
                 },
-                contextLifetime: ServiceLifetime.Scoped
-            );
+                lifetime: ServiceLifetime.Singleton);
+            // services.AddDbContext<AccountDbContext>(
+            //     (provider, builder) =>
+            //     {
+            //         var repoConfig = provider.GetRequiredService<AccountDalConfig>();
+            //         builder.SetUpAccountDbContext(repoConfig.ConnectionString);
+            //     },
+            //     contextLifetime: ServiceLifetime.Scoped
+            // );
             services.AddScoped<IAccountRepository, AccountRepository>();
 
             services.AddHealthChecks()

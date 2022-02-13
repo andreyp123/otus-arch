@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using NotificationSvc.Dal;
 using System;
+using Common.Events.Producer;
 using NotificationSvc.Api.EventHandlers;
 
 namespace NotificationSvc.Api
@@ -53,6 +54,7 @@ namespace NotificationSvc.Api
             });
 
             services.AddNotificationDal();
+            services.AddEventProducer();
             services.AddEventHandling();
 
             services.AddTokenAuthentication();

@@ -9,6 +9,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using System;
+using BillingSvc.Api.EventHandlers;
+using Common.Events.Producer;
 
 namespace BillingSvc.Api
 {
@@ -52,6 +54,8 @@ namespace BillingSvc.Api
             });
 
             services.AddAccountDal();
+            services.AddEventProducer();
+            services.AddEventHandling();
 
             services.AddTokenAuthentication();
         }

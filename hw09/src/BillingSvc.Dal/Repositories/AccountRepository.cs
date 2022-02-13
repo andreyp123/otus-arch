@@ -8,12 +8,12 @@ namespace BillingSvc.Dal.Repositories
     public class AccountRepository : IAccountRepository
     {
         private readonly AccountDalConfig _config;
-        private readonly AccountDbContext _dbContext;
+        private readonly IDbContextFactory<AccountDbContext> _dbContextFactory;
 
-        public AccountRepository(AccountDalConfig config, AccountDbContext dbContext)
+        public AccountRepository(AccountDalConfig config, IDbContextFactory<AccountDbContext> dbContextFactory)
         {
             _config = config;
-            _dbContext = dbContext;
+            _dbContextFactory = dbContextFactory;
         }
 
         public async Task<string> CreateAccountAsync(Account account, CancellationToken ct = default)
@@ -22,19 +22,23 @@ namespace BillingSvc.Dal.Repositories
             Guard.NotNullOrEmpty(account.AccountId, nameof(account.AccountId));
             Guard.NotNullOrEmpty(account.UserId, nameof(account.UserId));
 
-            if (await _dbContext.Accounts.AnyAsync(ae => ae.AccountId == account.AccountId || ae.UserId == account.UserId))
+            await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+
+            if (await dbContext.Accounts.AnyAsync(ae => ae.AccountId == account.AccountId || ae.UserId == account.UserId, ct))
             {
                 throw new CrashException("Account already exists");
             }
-            await _dbContext.Accounts.AddAsync(MapAccountEntity(account), ct);
-            await _dbContext.SaveChangesAsync(ct);
+            await dbContext.Accounts.AddAsync(MapAccountEntity(account), ct);
+            await dbContext.SaveChangesAsync(ct);
 
             return account.AccountId;
         }
 
         public async Task<Account> GetAccountAsync(string userId, CancellationToken ct = default)
         {
-            var accountEntity = await _dbContext.Accounts.FirstOrDefaultAsync(oe => oe.UserId == userId, ct);
+            await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+            
+            var accountEntity = await dbContext.Accounts.FirstOrDefaultAsync(oe => oe.UserId == userId, ct);
             if (accountEntity == null)
             {
                 throw new CrashException($"Account not found for user {userId}");
@@ -46,14 +50,16 @@ namespace BillingSvc.Dal.Repositories
         {
             Guard.NotNullOrEmpty(userId, nameof(userId));
 
-            var accountEntity = await _dbContext.Accounts.FirstOrDefaultAsync(ae => ae.UserId == userId);
+            await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+            
+            var accountEntity = await dbContext.Accounts.FirstOrDefaultAsync(ae => ae.UserId == userId, ct);
             if (accountEntity == null)
             {
                 throw new CrashException($"Account not found for user {userId}");
             }
 
             accountEntity.Balance += amount;
-            await _dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync(ct);
 
             return MapAccount(accountEntity);
         }

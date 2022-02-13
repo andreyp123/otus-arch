@@ -40,10 +40,10 @@ public class RentController : ControllerBase
     [Authorize]
     public async Task<string> StartRent(
         [FromHeader(Name = "Idempotence-Key")] string idempotenceKey,
-        [FromBody] StartRentDto startRent)
+        [FromBody] StartRentDto rentToStart)
     {
-        Guard.NotNull(startRent, nameof(startRent));
-        Guard.NotNullOrEmpty(startRent.CarId, nameof(startRent.CarId));
+        Guard.NotNull(rentToStart, nameof(rentToStart));
+        Guard.NotNullOrEmpty(rentToStart.CarId, nameof(rentToStart.CarId));
         
         var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
         CancellationToken ct = HttpContext.RequestAborted;
@@ -57,34 +57,41 @@ public class RentController : ControllerBase
         {
             throw new CrashConflictException("Idempotency error");
         }
+        
+        // check user for active rents
+        if (await _repository.HasUserActiveRentsAsync(userId, ct))
+        {
+            throw new CrashException("User has active rents");
+        }
 
         // create rent
         var rent = new Rent
         {
             RentId = Generator.GenerateId(),
             UserId = userId,
-            CarId = startRent.CarId,
-            Data = startRent.Data,
+            CarId = rentToStart.CarId,
+            Data = rentToStart.Data,
             State = RentState.Starting,
             CreatedDate = now,
-            Message = ""
+            Message = "Rent is starting"
         };
         await _repository.CreateRentAsync(rent, ct);
+
+        // produce 'RentCreated' event - initial event in the 'Start Rent' choreography saga
+        await _eventProducer.ProduceEventAsync(Topics.Rents,
+            new ProducedEvent<RentCreatedMessage>
+            {
+                Type = EventType.RentCreated,
+                Payload = new RentCreatedMessage
+                {
+                    RentId = rent.RentId,
+                    CarId = rent.CarId,
+                    UserId = rent.UserId
+                }
+            }, ct);
         
         scope.Complete();
         
-        // update billing
-        // todo: SAGA
-        
-        rent.StartDate = DateTime.UtcNow;
-        rent.State = RentState.Started;
-        rent.Message = "Rent is started";
-    
-        await _repository.UpdateRentAsync(rent.RentId, rent, HttpContext.RequestAborted);
-        
-        // send notification
-        Task.Run(() => _eventProducer.ProduceEventAsync(Topics.Notifications, PrepareNotificationEvent(rent), ct));
-
         return rent.RentId;
     }
 
@@ -113,10 +120,12 @@ public class RentController : ControllerBase
     public async Task FinishRent(string rentId)
     {
         var rent = await _repository.GetRentAsync(rentId, HttpContext.RequestAborted);
+        if (rent.State != RentState.Started)
+        {
+            throw new CrashException("Rent is not started");
+        }
         
-        // todo: check rent state
-        
-        // todo: SAGA
+        // todo: SAGA ('Finish Rent' choreography saga)
 
         rent.EndDate = DateTime.UtcNow;
         rent.State = RentState.Finished;
@@ -172,18 +181,5 @@ public class RentController : ControllerBase
         var hours = (decimal)((rent.EndDate ?? now) - rent.StartDate.Value).TotalHours;
 
         return rent.PricePerHour * hours + rent.PricePerKm * distance;
-    }
-
-    private ProducedEvent<NotificationMessage> PrepareNotificationEvent(Rent rent)
-    {
-        return new()
-        {
-            Type = EventType.Notification,
-            Payload = new NotificationMessage
-            {
-                UserId = rent.UserId,
-                Data = $"Rent: {rent.RentId}"
-            }
-        };
     }
 }

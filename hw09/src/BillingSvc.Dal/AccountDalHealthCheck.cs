@@ -7,17 +7,20 @@ namespace BillingSvc.Dal
     {
         public const string NAME = "DB";
 
-        private string? _connectionString;
+        private NpgSqlHealthCheck _check;
 
         public AccountDalHealthCheck(AccountDalConfig config)
         {
-            _connectionString = config.ConnectionString;
+            _check = new NpgSqlHealthCheck(config.ConnectionString, "select count(*) from billing_svc.accounts");
         }
 
         public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken = default)
         {
-            var postgresCheck = new NpgSqlHealthCheck(_connectionString, "select count(*) from accounts");
-            return await postgresCheck.CheckHealthAsync(context, cancellationToken);
+            var lts = CancellationTokenSource.CreateLinkedTokenSource(
+                new CancellationTokenSource(TimeSpan.FromSeconds(5)).Token,
+                cancellationToken);
+            
+            return await _check.CheckHealthAsync(context, lts.Token);
         }
     }
 }

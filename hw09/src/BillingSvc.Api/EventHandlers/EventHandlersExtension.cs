@@ -2,7 +2,7 @@ using Common.Events;
 using Common.Events.Consumer;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace RentSvc.Api.EventHandlers;
+namespace BillingSvc.Api.EventHandlers;
 
 public static class EventHandlersExtension
 {
@@ -10,7 +10,6 @@ public static class EventHandlersExtension
     {
         services.AddEventConsumer();
         services.AddSingleton<IEventHandler, CarEventHandler>();
-        services.AddSingleton<IEventHandler, BillingEventHandler>();
         return services;
     }
 }

@@ -3,7 +3,7 @@ version: '3.8'
 services:
 
   user-svc:
-    image: andreyp123/crash-user-svc:0.1
+    image: andreyp123/crash-user-svc:0.2
     container_name: user-svc
     build:
       context: ./
@@ -20,7 +20,7 @@ services:
         condition: service_healthy
 
   billing-svc:
-    image: andreyp123/crash-billing-svc:0.1
+    image: andreyp123/crash-billing-svc:0.2
     container_name: billing-svc
     build:
       context: ./
@@ -32,12 +32,14 @@ services:
     environment:
       - AccountDal__ConnectionString=server=postgres;port=5432;database=CrashDb;username=sa;password=sa;
       - AccountDal__AutoMigrate=true
+      - EventProducer__BootstrapServers=kafka:9092
+      - EventConsumer__BootstrapServers=kafka:9092
     depends_on:
       postgres:
         condition: service_healthy
 
   rent-svc:
-    image: andreyp123/crash-rent-svc:0.1
+    image: andreyp123/crash-rent-svc:0.2
     container_name: rent-svc
     build:
       context: ./
@@ -50,12 +52,13 @@ services:
       - RentDal__ConnectionString=server=postgres;port=5432;database=CrashDb;username=sa;password=sa;
       - RentDal__AutoMigrate=true
       - EventProducer__BootstrapServers=kafka:9092
+      - EventConsumer__BootstrapServers=kafka:9092
     depends_on:
       postgres:
         condition: service_healthy
 
   notification-svc:
-    image: andreyp123/crash-notification-svc:0.1
+    image: andreyp123/crash-notification-svc:0.2
     container_name: notification-svc
     build:
       context: ./
@@ -67,13 +70,14 @@ services:
     environment:
       - NotificationDal__ConnectionString=server=postgres;port=5432;database=CrashDb;username=sa;password=sa;
       - NotificationDal__AutoMigrate=true
-      - EventConsumer__BootstrapServers=host.docker.internal:9092
+      - EventProducer__BootstrapServers=kafka:9092
+      - EventConsumer__BootstrapServers=kafka:9092
     depends_on:
       postgres:
         condition: service_healthy
 
   car-svc:
-    image: andreyp123/crash-car-svc:0.1
+    image: andreyp123/crash-car-svc:0.2
     container_name: car-svc
     build:
       context: ./
@@ -85,6 +89,8 @@ services:
     environment:
       - CarDal__ConnectionString=server=postgres;port=5432;database=CrashDb;username=sa;password=sa;
       - CarDal__AutoMigrate=true
+      - EventProducer__BootstrapServers=kafka:9092
+      - EventConsumer__BootstrapServers=kafka:9092
     depends_on:
       postgres:
         condition: service_healthy

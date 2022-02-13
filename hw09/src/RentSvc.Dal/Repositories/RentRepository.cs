@@ -14,12 +14,12 @@ namespace RentSvc.Dal.Repositories
     public class RentRepository : IRentRepository
     {
         private readonly ILogger<RentRepository> _logger;
-        private readonly RentDbContext _dbContext;
+        private readonly IDbContextFactory<RentDbContext> _dbContextFactory;
 
-        public RentRepository(ILogger<RentRepository> logger, RentDbContext dbContext)
+        public RentRepository(ILogger<RentRepository> logger, IDbContextFactory<RentDbContext> dbContextFactory)
         {
             _logger = logger;
-            _dbContext = dbContext;
+            _dbContextFactory = dbContextFactory;
         }
 
         public async Task<string> CreateRentAsync(Rent rent, CancellationToken ct = default)
@@ -29,13 +29,14 @@ namespace RentSvc.Dal.Repositories
             Guard.NotNullOrEmpty(rent.UserId, nameof(rent.UserId));
 
             using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+            await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
             
-            if (await _dbContext.Rents.AnyAsync(oe => oe.RentId == rent.RentId))
+            if (await dbContext.Rents.AnyAsync(oe => oe.RentId == rent.RentId, ct))
             {
                 throw new CrashException("Rent already exists");
             }
-            await _dbContext.Rents.AddAsync(MapRentEntity(rent), ct);
-            await _dbContext.SaveChangesAsync(ct);
+            await dbContext.Rents.AddAsync(MapRentEntity(rent), ct);
+            await dbContext.SaveChangesAsync(ct);
 
             scope.Complete();
             return rent.RentId;
@@ -43,7 +44,9 @@ namespace RentSvc.Dal.Repositories
 
         public async Task<Rent> GetRentAsync(string rentId, CancellationToken ct = default)
         {
-            var rentEntity = await _dbContext.Rents.FirstOrDefaultAsync(oe => oe.RentId == rentId, ct);
+            await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+            
+            var rentEntity = await dbContext.Rents.FirstOrDefaultAsync(oe => oe.RentId == rentId, ct);
             if (rentEntity == null)
             {
                 throw new CrashException($"Rent {rentId} not found");
@@ -53,7 +56,9 @@ namespace RentSvc.Dal.Repositories
 
         public async Task<(Rent[], int)> GetUserRentsAsync(string userId, int start, int size, CancellationToken ct = default)
         {
-            var query = _dbContext.Rents
+            await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+            
+            var query = dbContext.Rents
                 .Where(oe => oe.UserId == userId);
             var total = await query
                 .CountAsync(ct);
@@ -66,11 +71,23 @@ namespace RentSvc.Dal.Repositories
             return (rents, total);
         }
 
+        public async Task<bool> HasUserActiveRentsAsync(string userId, CancellationToken ct = default)
+        {
+            await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+
+            return await dbContext.Rents.AnyAsync(
+                re => re.UserId == userId &&
+                      re.State != RentState.Finished.ToString() &&
+                      re.State != RentState.Error.ToString(),
+                ct);
+        }
+
         public async Task UpdateRentAsync(string rentId, Rent rent, CancellationToken ct = default)
         {
             using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+            await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-            var rentEntity = await _dbContext.Rents.FirstOrDefaultAsync(oe => oe.RentId == rentId, ct);
+            var rentEntity = await dbContext.Rents.FirstOrDefaultAsync(oe => oe.RentId == rentId, ct);
             if (rentEntity == null)
             {
                 throw new CrashException($"Rent {rentId} not found");
@@ -89,7 +106,7 @@ namespace RentSvc.Dal.Repositories
             rentEntity.PricePerKm = rent.PricePerKm;
             rentEntity.PricePerHour = rent.PricePerHour;
             
-            await _dbContext.SaveChangesAsync(ct);
+            await dbContext.SaveChangesAsync(ct);
             scope.Complete();
         }
 
@@ -99,8 +116,9 @@ namespace RentSvc.Dal.Repositories
                 return;
 
             using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-
-            var rentEntity = await _dbContext.Rents.FirstOrDefaultAsync(
+            await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+            
+            var rentEntity = await dbContext.Rents.FirstOrDefaultAsync(
                 re => re.CarId == carId &&
                       re.State == RentState.Started.ToString() &&
                       re.StartDate != null &&
@@ -110,7 +128,7 @@ namespace RentSvc.Dal.Repositories
             if (rentEntity != null)
             {
                 rentEntity.Mileage = mileage.Value;
-                await _dbContext.SaveChangesAsync(ct);
+                await dbContext.SaveChangesAsync(ct);
             }
             
             scope.Complete();

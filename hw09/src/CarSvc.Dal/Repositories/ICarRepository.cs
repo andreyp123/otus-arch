@@ -9,6 +9,6 @@ public interface ICarRepository
     Task<(Car[], int)> GetCarsAsync(int start, int size, CancellationToken ct = default);
     Task<bool> ValidateCarApiKeyAsync(string carId, string carApikeyHash, CancellationToken ct = default);
     Task UpdateCarStateAsync(string carId, CarState carState, CancellationToken ct = default);
-    Task StartCarRent(string carId, string rentId, DateTime rentStartDate, CancellationToken ct = default);
+    Task<Car> StartCarRent(string carId, string rentId, DateTime rentStartDate, CancellationToken ct = default);
     Task FinishCarRent(string carId, string rentId, DateTime rentEndDate, CancellationToken ct = default);
 }

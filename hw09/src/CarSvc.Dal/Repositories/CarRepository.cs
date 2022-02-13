@@ -96,7 +96,7 @@ public class CarRepository : ICarRepository
         tran.Complete();
     }
 
-    public async Task StartCarRent(string carId, string rentId, DateTime rentStartDate, CancellationToken ct = default)
+    public async Task<Car> StartCarRent(string carId, string rentId, DateTime rentStartDate, CancellationToken ct = default)
     {
         using var tran = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
         await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
@@ -112,7 +112,7 @@ public class CarRepository : ICarRepository
             throw new CrashException("Rent already exists");
         }
 
-        if (await dbContext.CarRents.AnyAsync(cre => cre.CarId == carEntity.Id && cre.RentEndDate != null, ct))
+        if (await dbContext.CarRents.AnyAsync(cre => cre.CarId == carEntity.Id && cre.RentEndDate == null, ct))
         {
             throw new CrashException("Car already rented");
         }
@@ -128,6 +128,8 @@ public class CarRepository : ICarRepository
 
         await dbContext.SaveChangesAsync(ct);
         tran.Complete();
+
+        return MapCar(carEntity);
     }
 
     public async Task FinishCarRent(string carId, string rentId, DateTime rentEndDate, CancellationToken ct = default)

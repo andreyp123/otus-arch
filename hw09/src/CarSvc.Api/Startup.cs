@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using CarSvc.Dal;
 using System;
+using CarSvc.Api.EventHandlers;
 using Common.Events.Producer;
 
 namespace CarSvc.Api
@@ -54,6 +55,7 @@ namespace CarSvc.Api
 
             services.AddCarDal();
             services.AddEventProducer();
+            services.AddEventHandling();
 
             services.AddTokenAuthentication();
         }

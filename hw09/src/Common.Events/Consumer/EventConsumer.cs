@@ -16,6 +16,8 @@ public class EventConsumer : BackgroundService
     {
         _logger = logger;
         _config = config;
+        
+        _logger.LogInformation($"Building event consumer. Config: {JsonHelper.Serialize(_config)}");
 
         var consumerConfig = new ConsumerConfig
         {

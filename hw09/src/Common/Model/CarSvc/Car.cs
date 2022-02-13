@@ -25,6 +25,4 @@ public class Car
     public string? ApiKeyHash { get; set; }
     public DateTime CreatedDate { get; set; }
     public DateTime ModifiedDate { get; set; }
-    
-    public bool IsRent { get; set; }
 }
