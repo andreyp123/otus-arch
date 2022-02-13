@@ -1,0 +1,459 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: crash-ingress
+  namespace: crash
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /$1$2
+spec:
+  defaultBackend:
+    service:
+      name: rent-svc
+      port:
+        number: 8004
+  rules:
+    - host: arch.homework
+      http:
+        paths:
+          # paths to user-svc
+          - path: /(auth/)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: user-svc
+                port:
+                  number: 8000
+          - path: /(profile/)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: user-svc
+                port:
+                  number: 8000
+          - path: /(users/)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: user-svc
+                port:
+                  number: 8000
+          # paths to billing-svc
+          - path: /(account/)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: billing-svc
+                port:
+                  number: 8002
+          # paths to rent-svc
+          - path: /(rents/)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: rent-svc
+                port:
+                  number: 8004
+          # paths to notification-svc
+          - path: /(notifications/)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: notification-svc
+                port:
+                  number: 8006
+          # paths to car-svc
+          - path: /(cars/)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: car-svc
+                port:
+                  number: 8008
+          - path: /(carstate/)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: car-svc
+                port:
+                  number: 8008
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-svc
+  namespace: crash
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+  selector:
+    app: user-svc
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: billing-svc
+  namespace: crash
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8002
+      targetPort: 8002
+  selector:
+    app: billing-svc
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: rent-svc
+  namespace: crash
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8004
+      targetPort: 8004
+  selector:
+    app: rent-svc
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-svc
+  namespace: crash
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8006
+      targetPort: 8006
+  selector:
+    app: notification-svc
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: car-svc
+  namespace: crash
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8008
+      targetPort: 8008
+  selector:
+    app: car-svc
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-svc-deployment
+  namespace: crash
+  labels:
+    app: user-svc
+spec:
+  selector:
+    matchLabels:
+      app: user-svc
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: user-svc
+    spec:
+      containers:            
+        - image: andreyp123/crash-user-svc:0.2
+          name: user-svc
+          env:
+            - name: UserDal__ConnectionString
+              valueFrom:
+                configMapKeyRef:
+                  name: crash-config
+                  key: DB_CONNECTION_STRING
+            - name: UserDal__AutoMigrate
+              value: "true"
+          ports:
+            - containerPort: 8000
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              port: 8000
+              path: /health
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+            periodSeconds: 20
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: billing-svc-deployment
+  namespace: crash
+  labels:
+    app: billing-svc
+spec:
+  selector:
+    matchLabels:
+      app: billing-svc
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: billing-svc
+    spec:
+      containers:            
+        - image: andreyp123/crash-billing-svc:0.2
+          name: billing-svc
+          env:
+            - name: AccountDal__ConnectionString
+              valueFrom:
+                configMapKeyRef:
+                  name: crash-config
+                  key: DB_CONNECTION_STRING
+            - name: AccountDal__AutoMigrate
+              value: "true"
+            - name: EventProducer__BootstrapServers
+              valueFrom:
+                configMapKeyRef:
+                  name: crash-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: EventConsumer__BootstrapServers
+              valueFrom:
+                configMapKeyRef:
+                  name: crash-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+          ports:
+            - containerPort: 8002
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              port: 8002
+              path: /health
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8002
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+            periodSeconds: 20
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rent-svc-deployment
+  namespace: crash
+  labels:
+    app: rent-svc
+spec:
+  selector:
+    matchLabels:
+      app: rent-svc
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: rent-svc
+    spec:
+      containers:            
+        - image: andreyp123/crash-rent-svc:0.2
+          name: rent-svc
+          env:
+            - name: RentDal__ConnectionString
+              valueFrom:
+                configMapKeyRef:
+                  name: crash-config
+                  key: DB_CONNECTION_STRING
+            - name: RentDal__AutoMigrate
+              value: "true"
+            - name: EventProducer__BootstrapServers
+              valueFrom:
+                configMapKeyRef:
+                  name: crash-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: EventConsumer__BootstrapServers
+              valueFrom:
+                configMapKeyRef:
+                  name: crash-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+          ports:
+            - containerPort: 8004
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              port: 8004
+              path: /health
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8004
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+            periodSeconds: 20
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-svc-deployment
+  namespace: crash
+  labels:
+    app: notification-svc
+spec:
+  selector:
+    matchLabels:
+      app: notification-svc
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: notification-svc
+    spec:
+      containers:            
+        - image: andreyp123/crash-notification-svc:0.3
+          name: notification-svc
+          env:
+            - name: NotificationDal__ConnectionString
+              valueFrom:
+                configMapKeyRef:
+                  name: crash-config
+                  key: DB_CONNECTION_STRING
+            - name: NotificationDal__AutoMigrate
+              value: "true"
+            - name: EventProducer__BootstrapServers
+              valueFrom:
+                configMapKeyRef:
+                  name: crash-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: EventConsumer__BootstrapServers
+              valueFrom:
+                configMapKeyRef:
+                  name: crash-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+          ports:
+            - containerPort: 8006
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              port: 8006
+              path: /health
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8006
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+            periodSeconds: 20
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: car-svc-deployment
+  namespace: crash
+  labels:
+    app: car-svc
+spec:
+  selector:
+    matchLabels:
+      app: car-svc
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: car-svc
+    spec:
+      containers:            
+        - image: andreyp123/crash-car-svc:0.3
+          name: notification-svc
+          env:
+            - name: CarDal__ConnectionString
+              valueFrom:
+                configMapKeyRef:
+                  name: crash-config
+                  key: DB_CONNECTION_STRING
+            - name: CarDal__AutoMigrate
+              value: "true"
+            - name: EventProducer__BootstrapServers
+              valueFrom:
+                configMapKeyRef:
+                  name: crash-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+            - name: EventConsumer__BootstrapServers
+              valueFrom:
+                configMapKeyRef:
+                  name: crash-config
+                  key: KAFKA_BOOTSTRAP_SERVERS
+          ports:
+            - containerPort: 8008
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            httpGet:
+              port: 8008
+              path: /health
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8008
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+            periodSeconds: 20
