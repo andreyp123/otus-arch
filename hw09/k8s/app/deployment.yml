@@ -5,7 +5,7 @@ metadata:
   namespace: crash
   annotations:
     kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/rewrite-target: /$1$2
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
 spec:
   defaultBackend:
     service:
@@ -16,61 +16,35 @@ spec:
     - host: arch.homework
       http:
         paths:
-          # paths to user-svc
-          - path: /(auth/)(.*)
+          - path: /user-svc/?(.*)
             pathType: Prefix
             backend:
               service:
                 name: user-svc
                 port:
                   number: 8000
-          - path: /(profile/)(.*)
-            pathType: Prefix
-            backend:
-              service:
-                name: user-svc
-                port:
-                  number: 8000
-          - path: /(users/)(.*)
-            pathType: Prefix
-            backend:
-              service:
-                name: user-svc
-                port:
-                  number: 8000
-          # paths to billing-svc
-          - path: /(account/)(.*)
+          - path: /billing-svc/?(.*)
             pathType: Prefix
             backend:
               service:
                 name: billing-svc
                 port:
                   number: 8002
-          # paths to rent-svc
-          - path: /(rents/)(.*)
+          - path: /rent-svc/?(.*)
             pathType: Prefix
             backend:
               service:
                 name: rent-svc
                 port:
                   number: 8004
-          # paths to notification-svc
-          - path: /(notifications/)(.*)
+          - path: /notification-svc/?(.*)
             pathType: Prefix
             backend:
               service:
                 name: notification-svc
                 port:
                   number: 8006
-          # paths to car-svc
-          - path: /(cars/)(.*)
-            pathType: Prefix
-            backend:
-              service:
-                name: car-svc
-                port:
-                  number: 8008
-          - path: /(carstate/)(.*)
+          - path: /car-svc/?(.*)
             pathType: Prefix
             backend:
               service:
@@ -357,7 +331,7 @@ spec:
         app: notification-svc
     spec:
       containers:            
-        - image: andreyp123/crash-notification-svc:0.3
+        - image: andreyp123/crash-notification-svc:0.2
           name: notification-svc
           env:
             - name: NotificationDal__ConnectionString
@@ -420,7 +394,7 @@ spec:
         app: car-svc
     spec:
       containers:            
-        - image: andreyp123/crash-car-svc:0.3
+        - image: andreyp123/crash-car-svc:0.2
           name: notification-svc
           env:
             - name: CarDal__ConnectionString

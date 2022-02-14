@@ -1,0 +1,6 @@
+1. install newman
+npm install -g newman
+newman --help
+
+2. run collection
+newman run --verbose crash.postman_collection.json
