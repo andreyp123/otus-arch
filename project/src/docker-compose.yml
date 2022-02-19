@@ -1,0 +1,144 @@
+version: '3.8'
+
+services:
+
+  user-svc:
+    image: andreyp123/crash-user-svc:0.3
+    container_name: user-svc
+    build:
+      context: ./
+      dockerfile: UserSvc.Api/Dockerfile
+      args:
+        VERSION: 0.3.0
+    ports:
+      - 8000:8000
+    environment:
+      - UserDal__ConnectionString=server=postgres;port=5432;database=CrashDb;username=sa;password=sa;
+      - UserDal__AutoMigrate=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  billing-svc:
+    image: andreyp123/crash-billing-svc:0.3
+    container_name: billing-svc
+    build:
+      context: ./
+      dockerfile: BillingSvc.Api/Dockerfile
+      args:
+        VERSION: 0.3.0
+    ports:
+      - 8002:8002
+    environment:
+      - AccountDal__ConnectionString=server=postgres;port=5432;database=CrashDb;username=sa;password=sa;
+      - AccountDal__AutoMigrate=true
+      - EventProducer__BootstrapServers=kafka:9092
+      - EventConsumer__BootstrapServers=kafka:9092
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  rent-svc:
+    image: andreyp123/crash-rent-svc:0.3
+    container_name: rent-svc
+    build:
+      context: ./
+      dockerfile: RentSvc.Api/Dockerfile
+      args:
+        VERSION: 0.3.0
+    ports:
+      - 8004:8004
+    environment:
+      - RentDal__ConnectionString=server=postgres;port=5432;database=CrashDb;username=sa;password=sa;
+      - RentDal__AutoMigrate=true
+      - EventProducer__BootstrapServers=kafka:9092
+      - EventConsumer__BootstrapServers=kafka:9092
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  notification-svc:
+    image: andreyp123/crash-notification-svc:0.3
+    container_name: notification-svc
+    build:
+      context: ./
+      dockerfile: NotificationSvc.Api/Dockerfile
+      args:
+        VERSION: 0.3.0
+    ports:
+      - 8006:8006
+    environment:
+      - NotificationDal__ConnectionString=server=postgres;port=5432;database=CrashDb;username=sa;password=sa;
+      - NotificationDal__AutoMigrate=true
+      - EventProducer__BootstrapServers=kafka:9092
+      - EventConsumer__BootstrapServers=kafka:9092
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  car-svc:
+    image: andreyp123/crash-car-svc:0.3
+    container_name: car-svc
+    build:
+      context: ./
+      dockerfile: CarSvc.Api/Dockerfile
+      args:
+        VERSION: 0.3.0
+    ports:
+      - 8008:8008
+    environment:
+      - CarDal__ConnectionString=server=postgres;port=5432;database=CrashDb;username=sa;password=sa;
+      - CarDal__AutoMigrate=true
+      - EventProducer__BootstrapServers=kafka:9092
+      - EventConsumer__BootstrapServers=kafka:9092
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:14.0-alpine
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_DB: CrashDb
+      POSTGRES_USER: sa
+      POSTGRES_PASSWORD: sa
+    volumes:
+      - ./run/postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d CrashDb -U sa"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+  
+  zookeeper:
+    image: docker.io/bitnami/zookeeper:3.7
+    ports:
+      - 22181:2181
+    volumes:
+      - ./run/zookeeper_data:/bitnami"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+
+  kafka:
+    image: docker.io/bitnami/kafka:3
+    ports:
+      - 9092:9092
+    volumes:
+      - ./run/kafka_data:/bitnami"
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    depends_on:
+      - zookeeper
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 8080:8080
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+    depends_on:
+      - kafka

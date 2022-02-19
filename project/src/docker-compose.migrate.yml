@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+
+  user-svc-migrator:
+    image: andreyp123/crash-user-svc:0.3
+    container_name: user-svc-migrator
+    command: migrate
+    environment:
+      - UserDal__ConnectionString=server=postgres;port=5432;database=CrashDb;username=sa;password=sa;
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  billing-svc-migrator:
+    image: andreyp123/crash-billing-svc:0.3
+    container_name: billing-svc-migrator
+    command: migrate
+    environment:
+      - AccountDal__ConnectionString=server=postgres;port=5432;database=CrashDb;username=sa;password=sa;
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  rent-svc-migrator:
+    image: andreyp123/crash-rent-svc:0.3
+    container_name: rent-svc-migrator
+    command: migrate
+    environment:
+      - RentDal__ConnectionString=server=postgres;port=5432;database=CrashDb;username=sa;password=sa;
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  notification-svc-migrator:
+    image: andreyp123/crash-notification-svc:0.3
+    container_name: notification-svc-migrator
+    command: migrate
+    environment:
+      - NotificationDal__ConnectionString=server=postgres;port=5432;database=CrashDb;username=sa;password=sa;
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  car-svc-migrator:
+    image: andreyp123/crash-car-svc:0.3
+    container_name: car-svc-migrator
+    command: migrate
+    environment:
+      - CarDal__ConnectionString=server=postgres;port=5432;database=CrashDb;username=sa;password=sa;
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:14.0-alpine
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_DB: CrashDb
+      POSTGRES_USER: sa
+      POSTGRES_PASSWORD: sa
+    volumes:
+      - ./run/postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d CrashDb -U sa"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
