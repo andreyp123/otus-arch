@@ -8,9 +8,9 @@ namespace Common.Events.Consumer;
 public class EventConsumer : BackgroundService
 {
     private readonly ILogger<EventConsumer> _logger;
-    private readonly IDictionary<string, IEventHandler> _eventHandlers;
+    private readonly IDictionary<EventKey, IEventHandler> _eventHandlers;
     private readonly EventConsumerConfig _config;
-    private readonly IConsumer<Ignore, string> _consumer;
+    private readonly IConsumer<string, string> _consumer;
     
     public EventConsumer(ILogger<EventConsumer> logger, EventConsumerConfig config, IEnumerable<IEventHandler> eventHandlers)
     {
@@ -25,9 +25,9 @@ public class EventConsumer : BackgroundService
             GroupId = _config.GroupId,
             AutoOffsetReset = AutoOffsetReset.Earliest
         };
-        _consumer = new ConsumerBuilder<Ignore, string>(consumerConfig).Build();
+        _consumer = new ConsumerBuilder<string, string>(consumerConfig).Build();
 
-        _eventHandlers = eventHandlers.ToDictionary(x => x.Topic);
+        _eventHandlers = eventHandlers.ToDictionary(x => new EventKey(x.Topic, x.EventType));
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -38,8 +38,9 @@ public class EventConsumer : BackgroundService
     
     private void StartConsumerLoop(CancellationToken stoppingToken)
     {
-        _consumer.Subscribe(_eventHandlers.Keys);
-        _logger.LogInformation($"Subscribed to topics: {string.Join(", ", _eventHandlers.Keys)}");
+        var topics = _eventHandlers.Select(x => x.Key.Topic).Distinct().ToList();
+        _consumer.Subscribe(topics);
+        _logger.LogInformation($"Subscribed to topics: {string.Join(", ", topics)}");
 
         // consuming loop
         while (!stoppingToken.IsCancellationRequested)
@@ -48,20 +49,15 @@ public class EventConsumer : BackgroundService
             {
                 var result = _consumer.Consume(stoppingToken);
                 
-                _logger.LogInformation($"Consumed message from {result.Topic}: {result.Message.Value}");
+                _logger.LogInformation($"Consumed event {result.Message.Key} from topic {result.Topic}: {result.Message.Value}");
 
-                if (_eventHandlers.TryGetValue(result.Topic, out var handler))
+                if (_eventHandlers.TryGetValue(new EventKey(result.Topic, result.Message.Key), out var handler))
                 {
-                    var ev = JsonHelper.Deserialize<ConsumedEvent>(result.Message.Value);
-                    if (ev == null)
-                    {
-                        throw new CrashException("Unable to deserialize event from the message consumed");
-                    }
-                    Task.WaitAny(handler.HandleEventAsync(ev, stoppingToken));
+                    Task.WaitAny(handler.HandleEventAsync(result.Message.Value, stoppingToken));
                 }
                 else
                 {
-                    _logger.LogWarning($"No handler found for topic {result.Topic}");
+                    _logger.LogInformation($"No handler found. Skipping event");
                 }
             }
             catch (OperationCanceledException)

@@ -78,16 +78,13 @@ public class RentController : ControllerBase
         await _repository.CreateRentAsync(rent, ct);
 
         // produce 'RentCreated' event - initial event in the 'Start Rent' choreography saga
-        await _eventProducer.ProduceEventAsync(Topics.Rents,
-            new ProducedEvent<RentCreatedMessage>
+        await _eventProducer.ProduceEventAsync(
+            new EventKey(Topics.Rents, EventTypes.RentCreated),
+            new RentCreatedMessage
             {
-                Type = EventType.RentCreated,
-                Payload = new RentCreatedMessage
-                {
-                    RentId = rent.RentId,
-                    CarId = rent.CarId,
-                    UserId = rent.UserId
-                }
+                RentId = rent.RentId,
+                CarId = rent.CarId,
+                UserId = rent.UserId
             }, ct);
         
         scope.Complete();

@@ -58,25 +58,23 @@ public class CarStateController : ControllerBase
         };
         
         await _repository.UpdateCarStateAsync(carId, state, ct);
-        SendCarStateEvent(carId, state);
+        
+        ProduceCarStateEvent(carId, state);
     }
 
-    private void SendCarStateEvent(string carId, CarState state)
+    private void ProduceCarStateEvent(string carId, CarState state)
     {
-        _eventProducer.ProduceEventAsync(Topics.Cars,
-                new ProducedEvent<CarStateMessage>
+        _eventProducer.ProduceEventAsync(
+                new EventKey(Topics.Cars, EventTypes.CarStateUpdated),
+                new CarStateUpdatedMessage
                 {
-                    Type = EventType.CarStateUpdated,
-                    Payload = new CarStateMessage
-                    {
-                        CarId = carId,
-                        DriveState = state.DriveState.ToString(),
-                        Mileage = state.Mileage
-                    }
+                    CarId = carId,
+                    DriveState = state.DriveState.ToString(),
+                    Mileage = state.Mileage
                 },
                 new CancellationTokenSource(TimeSpan.FromSeconds(30)).Token)
             .ContinueWith(
-                t => _logger.LogError(t.Exception, "Error while sending car state event"),
+                t => _logger.LogError(t.Exception, "Error while producing car state event"),
                 TaskContinuationOptions.OnlyOnFaulted);
     }
 }

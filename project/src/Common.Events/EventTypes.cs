@@ -1,6 +1,6 @@
 namespace Common.Events;
 
-public static class EventType
+public static class EventTypes
 {
     // Rents
     public const string RentCreated = nameof(RentCreated);

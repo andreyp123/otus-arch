@@ -1,4 +1,3 @@
-using Common.Events;
 using Common.Events.Consumer;
 using Microsoft.Extensions.DependencyInjection;
 

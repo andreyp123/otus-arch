@@ -9,8 +9,8 @@ public static class EventHandlersExtension
     public static IServiceCollection AddEventHandling(this IServiceCollection services)
     {
         services.AddEventConsumer();
-        services.AddSingleton<IEventHandler, RentEventHandler>();
-        services.AddSingleton<IEventHandler, BillingEventHandler>();
+        services.AddSingleton<IEventHandler, RentCreatedEventHandler>();
+        services.AddSingleton<IEventHandler, AccountAuthorizationFailedEventHandler>();
         return services;
     }
 }

@@ -8,7 +8,7 @@ public class EventProducer : IEventProducer
 {
     private readonly EventProducerConfig _config;
     private readonly ILogger<EventProducer> _logger;
-    private readonly IProducer<Null, string> _producer;
+    private readonly IProducer<string, string> _producer;
 
     public EventProducer(ILogger<EventProducer> logger, EventProducerConfig config)
     {
@@ -19,16 +19,16 @@ public class EventProducer : IEventProducer
         {
             BootstrapServers = _config.BootstrapServers
         };
-        _producer = new ProducerBuilder<Null, string>(producerConfig).Build();
+        _producer = new ProducerBuilder<string, string>(producerConfig).Build();
     }
-
-    public async Task ProduceEventAsync<TPayload>(string topic, ProducedEvent<TPayload> ev, CancellationToken ct = default)
+    
+    public async Task ProduceEventAsync<TEvent>(EventKey ek, TEvent ev, CancellationToken ct = default)
     {
-        _logger.LogInformation($"Producing event to {topic}...");
+        _logger.LogInformation($"Producing event {ek.EventType} to topic {ek.Topic}...");
         try
         {
             var evJson = JsonHelper.Serialize(ev);
-            await _producer.ProduceAsync(topic, new Message<Null, string> { Value = evJson }, ct);
+            await _producer.ProduceAsync(ek.Topic, new Message<string, string> { Key = ek.EventType, Value = evJson }, ct);
             _logger.LogInformation($"Successfully produced event: {evJson}");
         }
         catch (Exception ex)
