@@ -49,13 +49,33 @@ public class CarController : ControllerBase
         return new() {CarId = carId, CarApikey = carApiKey};
     }
 
+    [HttpPost("{carId}/reset")]
+    [Authorize(Roles = UserRoles.Employee)]
+    public async Task<NewCarDto> ResentCarApiKey(string carId)
+    {
+        Guard.NotNullOrEmpty(carId, nameof(carId));
+
+        var ct = HttpContext.RequestAborted;
+        var now = DateTime.UtcNow;
+        var newApiKey = Generator.GenerateApiKey();
+
+        var car = await _repository.GetCarAsync(carId, ct);
+        car.ApiKeyHash = Hasher.CalculateHash(newApiKey);
+        car.ModifiedDate = now;
+        
+        await _repository.UpdateCarAsync(carId, car, ct);
+
+        return new() {CarId = carId, CarApikey = newApiKey};
+    }
+
     [HttpGet]
     [Authorize]
     public async Task<ListResult<CarDto>> GetCars([FromQuery] int start, [FromQuery] int size)
     {
-        var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+       _ = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        bool isEmpoloyee = User.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == UserRoles.Employee);
 
-        (Car[] cars, int total) = await _repository.GetCarsAsync(start, size, HttpContext.RequestAborted);
+        (Car[] cars, int total) = await _repository.GetCarsAsync(start, size, isEmpoloyee, HttpContext.RequestAborted);
         return new ListResult<CarDto>(
             cars.Select(CarMapper.MapCarDto).ToArray(),
             total);

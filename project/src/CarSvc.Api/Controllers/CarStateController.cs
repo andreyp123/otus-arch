@@ -1,5 +1,9 @@
 using System;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading;
 using System.Threading.Tasks;
+using CarSvc.Api.Helpers;
 using CarSvc.Dal.Repositories;
 using Common.Events;
 using Common.Events.Messages;
@@ -30,40 +34,17 @@ public class CarStateController : ControllerBase
     [Authorize]
     public async Task<CarDto> GetCar()
     {
-        // todo: get current carId
-        var carId = "";
+        var carId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;;
         
         var car = await _repository.GetCarAsync(carId, HttpContext.RequestAborted);
-        return new CarDto
-        {
-            CarId = car.CarId,
-            Brand = car.Brand,
-            Model = car.Model,
-            Color = car.Color,
-            ReleaseDate = car.ReleaseDate,
-            BodyStyle = car.BodyStyle.ToString(),
-            DoorsCount = car.DoorsCount,
-            Transmission = car.Transmission.ToString(),
-            FuelType = car.FuelType.ToString(),
-            PricePerHour = car.PricePerHour,
-            PricePerKm = car.PricePerKm,
-            DriveState = car.DriveState.ToString(),
-            Mileage = car.Mileage,
-            LocationLat = car.LocationLat,
-            LocationLon = car.LocationLon,
-            RemainingFuel = car.RemainingFuel,
-            Alert = car.Alert,
-            CreatedDate = car.CreatedDate,
-            ModifiedDate = car.ModifiedDate
-        };
+        return CarMapper.MapCarDto(car);
     }
 
     [HttpPut]
     [Authorize]
     public async Task UpdateCarState(CarStateDto carState)
     {
-        // todo: get current carId
-        var carId = "";
+        var carId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;;
 
         var ct = HttpContext.RequestAborted;
         var state = new CarState
@@ -72,26 +53,30 @@ public class CarStateController : ControllerBase
             Mileage = carState.Mileage,
             LocationLat = carState.LocationLat,
             LocationLon = carState.LocationLon,
-            RemainingFuel = carState.LocationLon,
+            RemainingFuel = carState.RemainingFuel,
             Alert = carState.Alert
         };
         
         await _repository.UpdateCarStateAsync(carId, state, ct);
-
-        await _eventProducer.ProduceEventAsync(Topics.Cars, PrepareCarStateEvent(carId, state), ct);
+        SendCarStateEvent(carId, state);
     }
 
-    private ProducedEvent<CarStateMessage> PrepareCarStateEvent(string carId, CarState carState)
+    private void SendCarStateEvent(string carId, CarState state)
     {
-        return new()
-        {
-            Type = EventType.CarStateUpdated,
-            Payload = new CarStateMessage
-            {
-                CarId = carId,
-                DriveState = carState.DriveState,
-                Mileage = carState.Mileage
-            }
-        };
+        _eventProducer.ProduceEventAsync(Topics.Cars,
+                new ProducedEvent<CarStateMessage>
+                {
+                    Type = EventType.CarStateUpdated,
+                    Payload = new CarStateMessage
+                    {
+                        CarId = carId,
+                        DriveState = state.DriveState.ToString(),
+                        Mileage = state.Mileage
+                    }
+                },
+                new CancellationTokenSource(TimeSpan.FromSeconds(30)).Token)
+            .ContinueWith(
+                t => _logger.LogError(t.Exception, "Error while sending car state event"),
+                TaskContinuationOptions.OnlyOnFaulted);
     }
 }

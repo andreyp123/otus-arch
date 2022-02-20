@@ -34,6 +34,45 @@ public class CarRepository : ICarRepository
         return car.CarId;
     }
 
+    public async Task UpdateCarAsync(string carId, Car car, CancellationToken ct = default)
+    {
+        Guard.NotNullOrEmpty(carId, nameof(carId));
+        Guard.NotNull(car, nameof(car));
+        
+        using var tran = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+
+        var carEntity = await dbContext.Cars.SingleOrDefaultAsync(ce => ce.CarId == carId, ct);
+        if (carEntity == null)
+        {
+            throw new CrashException($"Car {carId} not found");
+        }
+
+        carEntity.CarId = car.CarId;
+        carEntity.Brand = car.Brand;
+        carEntity.Model = car.Model;
+        carEntity.Color = car.Color;
+        carEntity.ReleaseDate = car.ReleaseDate;
+        carEntity.BodyStyle = car.BodyStyle.ToString();
+        carEntity.DoorsCount = car.DoorsCount;
+        carEntity.Transmission = car.Transmission.ToString();
+        carEntity.FuelType = car.FuelType.ToString();
+        carEntity.PricePerHour = car.PricePerHour;
+        carEntity.PricePerKm = car.PricePerKm;
+        carEntity.DriveState = car.DriveState.ToString();
+        carEntity.Mileage = car.Mileage;
+        carEntity.LocationLat = car.LocationLat;
+        carEntity.LocationLon = car.LocationLon;
+        carEntity.RemainingFuel = car.RemainingFuel;
+        carEntity.Alert = car.Alert;
+        carEntity.ApiKeyHash = car.ApiKeyHash;
+        carEntity.CreatedDate = car.CreatedDate;
+        carEntity.ModifiedDate = car.ModifiedDate;
+
+        await dbContext.SaveChangesAsync();
+        tran.Complete();
+    }
+
     public async Task<Car> GetCarAsync(string carId, CancellationToken ct = default)
     {
         await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
@@ -47,28 +86,22 @@ public class CarRepository : ICarRepository
         return MapCar(carEntity);
     }
 
-    public async Task<(Car[], int)> GetCarsAsync(int start, int size, CancellationToken ct = default)
+    public async Task<(Car[], int)> GetCarsAsync(int start, int size, bool all = true, CancellationToken ct = default)
     {
         await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-        var query = dbContext.Cars;
+        var query = dbContext.Cars
+            .Include(ce => ce.CarRents)
+            .Where(ce => all || !ce.CarRents.Any() || ce.CarRents.All(cre => cre.RentEndDate != null));
         var total = await query
             .CountAsync(ct);
         var cars = await query
-            .OrderByDescending(ne => ne.CreatedDate)
+            .OrderByDescending(ce => ce.CreatedDate)
             .Skip(start)
             .Take(size)
             .Select(ce => MapCar(ce))
             .ToArrayAsync(ct);
         return (cars, total);
-    }
-
-    public async Task<bool> ValidateCarApiKeyAsync(string carId, string carApikeyHash, CancellationToken ct = default)
-    {
-        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
-
-        var carEntity = await dbContext.Cars.SingleOrDefaultAsync(ce => ce.CarId == carId, ct);
-        return carEntity != null && carEntity.ApiKeyHash == carApikeyHash;
     }
 
     public async Task UpdateCarStateAsync(string carId, CarState carState, CancellationToken ct = default)

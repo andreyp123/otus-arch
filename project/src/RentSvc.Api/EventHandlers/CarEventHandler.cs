@@ -70,19 +70,24 @@ public class CarEventHandler : EventHandlerBase
             rent.State = RentState.Error;
             rent.Message = $"Rent starting failed. {message.Message}";
             await _repository.UpdateRentAsync(message.RentId, rent, ct);
-            
-            // send notification
-            await _eventProducer.ProduceEventAsync(Topics.Notifications, new ProducedEvent<NotificationMessage>
-            {
-                Type = EventType.Notification,
-                Payload = new NotificationMessage
-                {
-                    UserId = rent.UserId,
-                    Data = $"Rent is not started. {rent.Message}"
-                }
-            }, ct);
 
             scope.Complete();
+            
+            // send notification
+            _eventProducer.ProduceEventAsync(Topics.Notifications,
+                    new ProducedEvent<NotificationMessage>
+                    {
+                        Type = EventType.Notification,
+                        Payload = new NotificationMessage
+                        {
+                            UserId = rent.UserId,
+                            Data = $"Rent is not started. {rent.Message}"
+                        }
+                    },
+                    new CancellationTokenSource(TimeSpan.FromSeconds(30)).Token)
+                .ContinueWith(
+                    t => _logger.LogError(t.Exception, "Error while sending notification"),
+                    TaskContinuationOptions.OnlyOnFaulted);
         });
     }
 }

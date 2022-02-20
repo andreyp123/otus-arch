@@ -17,7 +17,7 @@ namespace RentSvc.Dal
                     var repoConfig = provider.GetRequiredService<RentDalConfig>();
                     builder.SetUpRentDbContext(repoConfig.ConnectionString);
                 },
-                lifetime: ServiceLifetime.Scoped);
+                lifetime: ServiceLifetime.Singleton);
             // services.AddDbContext<RentDbContext>(
             //     (provider, builder) =>
             //     {

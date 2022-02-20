@@ -180,6 +180,6 @@ public class RentController : ControllerBase
 
         var hours = (decimal)((rent.EndDate ?? now) - rent.StartDate.Value).TotalHours;
 
-        return rent.PricePerHour * hours + rent.PricePerKm * distance;
+        return Math.Round((decimal)(rent.PricePerHour * hours + rent.PricePerKm * distance), 2);
     }
 }
