@@ -1,4 +1,3 @@
-using Common.Events;
 using Common.Events.Consumer;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,6 +10,8 @@ public static class EventHandlersExtension
         services.AddEventConsumer();
         services.AddSingleton<IEventHandler, RentCreatedEventHandler>();
         services.AddSingleton<IEventHandler, AccountAuthorizationFailedEventHandler>();
+        services.AddSingleton<IEventHandler, RentFinishRequestedEventHandler>();
+        services.AddSingleton<IEventHandler, PaymentPerformedEventHandler>();
         return services;
     }
 }

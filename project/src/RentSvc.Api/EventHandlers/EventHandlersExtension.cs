@@ -13,6 +13,10 @@ public static class EventHandlersExtension
         services.AddSingleton<IEventHandler, CarStateUpdatedEventHandler>();
         services.AddSingleton<IEventHandler, CarReservedEventHandler>();
         services.AddSingleton<IEventHandler, CarReservationFailedEventHandler>();
+        services.AddSingleton<IEventHandler, PaymentPerformedEventHandler>();
+        services.AddSingleton<IEventHandler, PaymentPerformingFailedEventHandler>();
+        services.AddSingleton<IEventHandler, CarReadyToFinishRentEventHandler>();
+        services.AddSingleton<IEventHandler, CarNotReadyToFinishRentEventHandler>();
         return services;
     }
 }

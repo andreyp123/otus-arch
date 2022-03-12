@@ -9,6 +9,7 @@ public static class EventHandlersExtension
     {
         services.AddEventConsumer();
         services.AddSingleton<IEventHandler, CarReservedEventHandler>();
+        services.AddSingleton<IEventHandler, RentInvoiceCreatedEventHandler>();
         return services;
     }
 }

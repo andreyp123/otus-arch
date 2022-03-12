@@ -4,20 +4,20 @@ using Common.Events;
 using Common.Events.Consumer;
 using Common.Events.Messages;
 using Microsoft.Extensions.Logging;
-using RentSvc.Dal.Repositories;
+using RentSvc.Api.Service;
 
 namespace RentSvc.Api.EventHandlers;
 
 public class CarReservedEventHandler : EventHandlerBase<CarReservedMessage>
 {
     private ILogger<CarReservedEventHandler> _logger;
-    private readonly IRentRepository _repository;
+    private readonly IRentService _rentService;
     
-    public CarReservedEventHandler(ILogger<CarReservedEventHandler> logger, IRentRepository repository)
+    public CarReservedEventHandler(ILogger<CarReservedEventHandler> logger, IRentService rentService)
         : base(logger)
     {
         _logger = logger;
-        _repository = repository;
+        _rentService = rentService;
     }
 
     public override string Topic => Topics.Cars;
@@ -25,11 +25,6 @@ public class CarReservedEventHandler : EventHandlerBase<CarReservedMessage>
     
     protected override async Task HandleMessageAsync(CarReservedMessage msg, CancellationToken ct = default)
     {
-        var rent = await _repository.GetRentAsync(msg.RentId, ct);
-            
-        rent.StartMileage = msg.Car.Mileage;
-        rent.PricePerHour = msg.Car.PricePerHour;
-        rent.PricePerKm = msg.Car.PricePerKm;
-        await _repository.UpdateRentAsync(msg.RentId, rent, ct);
+        await _rentService.UpdateInitialCarStateAsync(msg.UserId, msg.RentId, msg.Car, ct);
     }
 }

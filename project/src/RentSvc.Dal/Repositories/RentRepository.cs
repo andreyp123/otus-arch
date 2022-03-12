@@ -42,11 +42,11 @@ namespace RentSvc.Dal.Repositories
             return rent.RentId;
         }
 
-        public async Task<Rent> GetRentAsync(string rentId, CancellationToken ct = default)
+        public async Task<Rent> GetUserRentAsync(string userId, string rentId, CancellationToken ct = default)
         {
             await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
             
-            var rentEntity = await dbContext.Rents.FirstOrDefaultAsync(oe => oe.RentId == rentId, ct);
+            var rentEntity = await dbContext.Rents.FirstOrDefaultAsync(re => re.UserId == userId && re.RentId == rentId, ct);
             if (rentEntity == null)
             {
                 throw new CrashException($"Rent {rentId} not found");

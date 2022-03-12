@@ -4,20 +4,20 @@ using Common.Events;
 using Common.Events.Consumer;
 using Common.Events.Messages;
 using Microsoft.Extensions.Logging;
-using RentSvc.Dal.Repositories;
+using RentSvc.Api.Service;
 
 namespace RentSvc.Api.EventHandlers;
 
 public class CarStateUpdatedEventHandler : EventHandlerBase<CarStateUpdatedMessage>
 {
-    private ILogger<CarStateUpdatedEventHandler> _logger;
-    private readonly IRentRepository _repository;
+    private readonly ILogger<CarStateUpdatedEventHandler> _logger;
+    private readonly IRentService _rentService;
     
-    public CarStateUpdatedEventHandler(ILogger<CarStateUpdatedEventHandler> logger, IRentRepository repository)
+    public CarStateUpdatedEventHandler(ILogger<CarStateUpdatedEventHandler> logger, IRentService rentService)
         : base(logger)
     {
         _logger = logger;
-        _repository = repository;
+        _rentService = rentService;
     }
 
     public override string Topic => Topics.Cars;
@@ -25,8 +25,6 @@ public class CarStateUpdatedEventHandler : EventHandlerBase<CarStateUpdatedMessa
     
     protected override async Task HandleMessageAsync(CarStateUpdatedMessage msg, CancellationToken ct = default)
     {
-        await _repository.UpdateActiveRentAsync(msg.CarId, msg.Mileage, ct);
-        
-        _logger.LogInformation("Updated active rent in the DB");
+        await _rentService.UpdateRuntimeCarStateAsync(msg.CarId, msg.Mileage, ct);
     }
 }

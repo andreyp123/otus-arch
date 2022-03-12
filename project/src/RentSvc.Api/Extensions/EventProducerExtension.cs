@@ -10,7 +10,7 @@ namespace RentSvc.Api.Extensions;
 
 public static class EventProducerExtension
 {
-    public static void ProduceNotification(this IEventProducer eventProducer, NotificationMessage message, ILogger logger)
+    public static void ProduceNotificationWithNoWait(this IEventProducer eventProducer, NotificationMessage message, ILogger logger)
     {
         eventProducer.ProduceEventAsync(
                 new EventKey(Topics.Notifications, EventTypes.Notification),
