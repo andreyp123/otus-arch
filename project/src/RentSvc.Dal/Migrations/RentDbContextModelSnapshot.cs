@@ -99,24 +99,62 @@ namespace RentSvc.Dal.Migrations
                     b.ToTable("rents", "rent_svc");
                 });
 
-            modelBuilder.Entity("RentSvc.Dal.Model.RequestEntity", b =>
+            modelBuilder.Entity("RentSvc.Dal.Model.UserEntity", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("text")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
                         .HasColumnName("id");
 
-                    b.Property<string>("Name")
-                        .HasColumnType("text")
-                        .HasColumnName("name");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("Date")
+                    b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("date");
+                        .HasColumnName("deleted_date");
 
-                    b.HasKey("Id", "Name", "Date")
-                        .HasName("pk_requests");
+                    b.Property<string>("DriverLicense")
+                        .HasColumnType("text")
+                        .HasColumnName("driver_license");
 
-                    b.ToTable("requests", "rent_svc");
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("email");
+
+                    b.Property<string>("FullName")
+                        .HasColumnType("text")
+                        .HasColumnName("full_name");
+
+                    b.Property<DateTime>("ModifiedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("modified_date");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("text")
+                        .HasColumnName("phone_number");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("username");
+
+                    b.Property<bool>("Verified")
+                        .HasColumnType("boolean")
+                        .HasColumnName("verified");
+
+                    b.HasKey("Id")
+                        .HasName("pk_users");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_users_user_id");
+
+                    b.ToTable("users", "rent_svc");
                 });
 #pragma warning restore 612, 618
         }

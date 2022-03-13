@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
@@ -27,7 +28,9 @@ namespace UserSvc.Dal.Migrations
                     driver_license = table.Column<string>(type: "text", nullable: true),
                     verified = table.Column<bool>(type: "boolean", nullable: false),
                     password_hash = table.Column<string>(type: "text", nullable: false),
-                    roles = table.Column<string>(type: "text", nullable: false)
+                    roles = table.Column<string>(type: "text", nullable: false),
+                    created_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    modified_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -37,8 +40,8 @@ namespace UserSvc.Dal.Migrations
             migrationBuilder.InsertData(
                 schema: "user_svc",
                 table: "users",
-                columns: new[] { "id", "driver_license", "email", "full_name", "password_hash", "phone_number", "roles", "user_id", "username", "verified" },
-                values: new object[] { -1, null, "admin@admin", null, "jGl25bVBBBW96Qi9Te4V37Fnqchz/Eu4qB9vKrRIqRg=", null, "Employee", "eb4fa493-bfae-4ddb-a5a5-3ce88e7e69dc", "admin", false });
+                columns: new[] { "id", "created_date", "driver_license", "email", "full_name", "modified_date", "password_hash", "phone_number", "roles", "user_id", "username", "verified" },
+                values: new object[] { -1, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, "admin@admin", null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "jGl25bVBBBW96Qi9Te4V37Fnqchz/Eu4qB9vKrRIqRg=", null, "Employee", "45c23e94-8eaf-4cb6-84ab-0d8a9e47d35a", "admin", false });
 
             migrationBuilder.CreateIndex(
                 name: "ix_users_user_id",

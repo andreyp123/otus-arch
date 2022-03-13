@@ -40,17 +40,25 @@ namespace RentSvc.Dal.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "requests",
+                name: "users",
                 schema: "rent_svc",
                 columns: table => new
                 {
-                    id = table.Column<string>(type: "text", nullable: false),
-                    name = table.Column<string>(type: "text", nullable: false),
-                    date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    user_id = table.Column<string>(type: "text", nullable: false),
+                    username = table.Column<string>(type: "text", nullable: false),
+                    full_name = table.Column<string>(type: "text", nullable: true),
+                    email = table.Column<string>(type: "text", nullable: false),
+                    phone_number = table.Column<string>(type: "text", nullable: true),
+                    driver_license = table.Column<string>(type: "text", nullable: true),
+                    verified = table.Column<bool>(type: "boolean", nullable: false),
+                    modified_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    deleted_date = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_requests", x => new { x.id, x.name, x.date });
+                    table.PrimaryKey("pk_users", x => x.id);
                 });
 
             migrationBuilder.CreateIndex(
@@ -58,6 +66,13 @@ namespace RentSvc.Dal.Migrations
                 schema: "rent_svc",
                 table: "rents",
                 column: "rent_id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_users_user_id",
+                schema: "rent_svc",
+                table: "users",
+                column: "user_id",
                 unique: true);
         }
 
@@ -68,7 +83,7 @@ namespace RentSvc.Dal.Migrations
                 schema: "rent_svc");
 
             migrationBuilder.DropTable(
-                name: "requests",
+                name: "users",
                 schema: "rent_svc");
         }
     }

@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Linq;
 using System.Threading.Tasks;
+using Common.Events.Producer;
+using UserSvc.Api.Extensions;
+using UserSvc.Api.Helpers;
 using UserSvc.Dal.Repositories;
 
 namespace UserSvc.Api.Controllers;
@@ -17,11 +20,13 @@ public class UserManagementController : ControllerBase
 {
     private readonly ILogger<UserManagementController> _logger;
     private readonly IUserRepository _repository;
+    private readonly IEventProducer _eventProducer;
 
-    public UserManagementController(ILogger<UserManagementController> logger, IUserRepository repository)
+    public UserManagementController(ILogger<UserManagementController> logger, IUserRepository repository, IEventProducer eventProducer)
     {
         _logger = logger;
         _repository = repository;
+        _eventProducer = eventProducer;
     }
 
     [HttpPost("")]
@@ -32,7 +37,9 @@ public class UserManagementController : ControllerBase
         Guard.NotNullOrEmpty(user.Username, nameof(user.Username));
         Guard.NotNullOrEmpty(user.Password, nameof(user.Password));
 
-        return await _repository.CreateUserAsync(
+        var ct = HttpContext.RequestAborted;
+
+        var createdUser = await _repository.CreateUserAsync(
             new User
             {
                 UserId = Generator.GenerateId(),
@@ -44,8 +51,11 @@ public class UserManagementController : ControllerBase
                 Verified = user.Verified,
                 PasswordHash = Hasher.CalculateHash(user.Password),
                 Roles = user.Roles
-            },
-            HttpContext.RequestAborted);
+            }, ct);
+        
+        _eventProducer.ProduceUserUpdatedWithNoWait(createdUser, _logger);
+
+        return createdUser.UserId;
     }
 
     [HttpGet("")]
@@ -54,7 +64,7 @@ public class UserManagementController : ControllerBase
     {
         (User[] users, int total) = await _repository.GetUsersAsync(start, size, HttpContext.RequestAborted);
         return new ListResult<UserDto>(
-            users.Select(u => MapUserDto(u)).ToArray(),
+            users.Select(UserMapper.MapUserDto).ToArray(),
             total);
     }
 
@@ -63,7 +73,7 @@ public class UserManagementController : ControllerBase
     public async Task<UserDto> GetUser(string userId)
     {
         User user = await _repository.GetUserAsync(userId, HttpContext.RequestAborted);
-        return MapUserDto(user);
+        return UserMapper.MapUserDto(user);
     }
 
     [HttpPut("{userId}")]
@@ -73,8 +83,10 @@ public class UserManagementController : ControllerBase
         Guard.NotNullOrEmpty(userId, nameof(userId));
         Guard.NotNull(user, nameof(user));
         Guard.NotNullOrEmpty(user.Username, nameof(user.Username));
+        
+        var ct = HttpContext.RequestAborted;
 
-        await _repository.UpdateUserAsync(userId,
+        var updatedUser = await _repository.UpdateUserAsync(userId,
             new User
             {
                 UserId = userId,
@@ -89,8 +101,9 @@ public class UserManagementController : ControllerBase
                     : null,
                 Roles = user.Roles
             },
-            selfUpdate: false,
-            HttpContext.RequestAborted);
+            selfUpdate: false, ct);
+
+        _eventProducer.ProduceUserUpdatedWithNoWait(updatedUser, _logger);
     }
 
     [HttpDelete("{userId}")]
@@ -98,20 +111,7 @@ public class UserManagementController : ControllerBase
     public async Task DeleteUser(string userId)
     {
         await _repository.DeleteUserAsync(userId, HttpContext.RequestAborted);
-    }
-
-    private UserDto MapUserDto(User user)
-    {
-        return new UserDto
-        {
-            UserId = user.UserId,
-            Username = user.Username,
-            FullName = user.FullName,
-            Email = user.Email,
-            PhoneNumber = user.PhoneNumber,
-            DriverLicense = user.DriverLicense,
-            Verified = user.Verified,
-            Roles = user.Roles
-        };
+        
+        _eventProducer.ProduceUserDeletedWithNoWait(userId, _logger);
     }
 }

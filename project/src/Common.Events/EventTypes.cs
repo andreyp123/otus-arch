@@ -22,4 +22,7 @@ public static class EventTypes
     
     // Notifications
     public const string Notification = nameof(Notification);
+    
+    // Users
+    public const string UserUpdated = nameof(UserUpdated);
 }

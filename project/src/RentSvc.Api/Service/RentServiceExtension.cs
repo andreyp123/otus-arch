@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using RentSvc.Api.Cache;
 
 namespace RentSvc.Api.Service;
 

@@ -30,9 +30,9 @@ namespace NotificationSvc.Api.Controllers
         {
             var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
 
-            (Notification[] notirications, int total) = await _repository.GetUserNotificationsAsync(userId, start, size, HttpContext.RequestAborted);
+            (Notification[] notifications, int total) = await _repository.GetUserNotificationsAsync(userId, start, size, HttpContext.RequestAborted);
             return new ListResult<NotificationDto>(
-                notirications.Select(n => new NotificationDto
+                notifications.Select(n => new NotificationDto
                     {
                         UserId = n.UserId,
                         NotificationId = n.NotificationId,

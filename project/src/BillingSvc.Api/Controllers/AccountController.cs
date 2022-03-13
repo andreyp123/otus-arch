@@ -10,6 +10,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using BillingSvc.Dal.Repositories;
+using Common.Model;
 
 namespace BillingSvc.Api.Controllers
 {
@@ -93,6 +94,18 @@ namespace BillingSvc.Api.Controllers
             return MapAccountDto(account);
         }
 
+        [HttpGet("events")]
+        [Authorize]
+        public async Task<ListResult<AccountEventDto>> GetAccountEvents([FromQuery] int start, [FromQuery] int size)
+        {
+            var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+            (AccountEvent[] events, int total) = await _repository.GetAccountEventsAsync(userId, start, size, HttpContext.RequestAborted);
+            return new ListResult<AccountEventDto>(
+                events.Select(MapAccountEventDto).ToArray(),
+                total);
+        }
+
         private AccountDto MapAccountDto(Account account)
         {
             return new AccountDto
@@ -102,6 +115,18 @@ namespace BillingSvc.Api.Controllers
                 Currency = account.Currency,
                 Balance = account.Balance,
                 CreatedDate = account.CreatedDate
+            };
+        }
+
+        private AccountEventDto MapAccountEventDto(AccountEvent accountEvent)
+        {
+            return new AccountEventDto
+            {
+                AccountId = accountEvent.AccountId,
+                EventDate = accountEvent.EventDate,
+                EventMessage = accountEvent.EventMessage,
+                Amount = accountEvent.Amount,
+                Balance = accountEvent.Balance
             };
         }
     }

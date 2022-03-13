@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using System;
+using Common.Events.Producer;
 using UserSvc.Dal;
 
 namespace UserSvc.Api
@@ -52,6 +53,7 @@ namespace UserSvc.Api
             });
 
             services.AddUserDal();
+            services.AddEventProducer();
 
             services.AddTokenAuthentication();
         }

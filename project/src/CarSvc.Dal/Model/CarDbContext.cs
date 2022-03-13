@@ -38,7 +38,6 @@ public class CarDbContext : DbContext
 
     private void BuildCarRents(ModelBuilder modelBuilder)
     {
-
         modelBuilder.Entity<CarRentEntity>()
             .HasKey(cre => cre.Id);
 

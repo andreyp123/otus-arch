@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: crash-config
-  namespace: crash
-data:
-  LOG_LEVEL: Information
-  DB_CONNECTION_STRING: server=db-postgresql;port=5432;database=CrashDb;username=sa;password=sa;
-  KAFKA_BOOTSTRAP_SERVERS: brocker-kafka:9092

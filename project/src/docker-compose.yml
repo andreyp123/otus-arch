@@ -15,6 +15,7 @@ services:
     environment:
       - UserDal__ConnectionString=server=postgres;port=5432;database=CrashDb;username=sa;password=sa;
       - UserDal__AutoMigrate=true
+      - EventProducer__BootstrapServers=kafka:9092
     depends_on:
       postgres:
         condition: service_healthy
@@ -53,6 +54,7 @@ services:
       - RentDal__AutoMigrate=true
       - EventProducer__BootstrapServers=kafka:9092
       - EventConsumer__BootstrapServers=kafka:9092
+      - CacheManager__RedisConnectionString=redis:6379
     depends_on:
       postgres:
         condition: service_healthy
@@ -72,6 +74,9 @@ services:
       - NotificationDal__AutoMigrate=true
       - EventProducer__BootstrapServers=kafka:9092
       - EventConsumer__BootstrapServers=kafka:9092
+      - EmailSender__Username=
+      - EmailSender__Password=
+      - EmailSender__From=
     depends_on:
       postgres:
         condition: service_healthy
@@ -147,3 +152,23 @@ services:
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
     depends_on:
       - kafka
+
+  redis:
+    image: redis:6.0.2
+    ports:
+      - 6379:6379
+    command:
+      - --protected-mode no
+
+  redisinsight:
+    image: redislabs/redisinsight
+    ports:
+      - 8001:8001
+    depends_on:
+      - redis
+
+  redisinsight-init:
+    image: curlimages/curl
+    command: [ "sh","-c","curl --retry 5 --retry-connrefused -X POST redisinsight:8001/api/instance/ -H \"Content-Type: application/json\" --data '{\"name\":\"redis\",\"connectionType\":\"STANDALONE\",\"host\": \"redis\",\"port\": 6379}' " ]
+    depends_on:
+      - redisinsight

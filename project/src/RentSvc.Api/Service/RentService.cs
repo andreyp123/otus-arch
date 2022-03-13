@@ -9,12 +9,14 @@ using Common.Events.Messages;
 using Common.Events.Producer;
 using Common.Helpers;
 using Common.Model;
-using Common.Model.CarSvc;
 using Common.Model.RentSvc;
 using Microsoft.Extensions.Logging;
+using RentSvc.Api.Cache;
 using RentSvc.Api.Extensions;
 using RentSvc.Api.Helpers;
 using RentSvc.Dal.Repositories;
+using UserDto = Common.Model.UserSvc.UserDto;
+using CarDto = Common.Model.CarSvc.CarDto;
 
 namespace RentSvc.Api.Service;
 
@@ -22,16 +24,18 @@ public class RentService : IRentService
 {
     private readonly ILogger<RentService> _logger;
     private readonly IRentRepository _repository;
-    private readonly IRequestRepository _reqRepository;
+    private readonly IUserRepository _userRepository;
     private readonly IEventProducer _eventProducer;
+    private readonly ICacheManager _cacheManager;
     
-    public RentService(ILogger<RentService> logger, IRentRepository repository, IRequestRepository reqRepository,
-        IEventProducer eventProducer)
+    public RentService(ILogger<RentService> logger, IRentRepository repository, IUserRepository userRepository,
+        IEventProducer eventProducer, ICacheManager cacheManager)
     {
         _logger = logger;
         _repository = repository;
-        _reqRepository = reqRepository;
+        _userRepository = userRepository;
         _eventProducer = eventProducer;
+        _cacheManager = cacheManager;
     }
 
     public async Task<RentDto> GetUserRentAsync(string userId, string rentId, CancellationToken ct = default)
@@ -48,6 +52,30 @@ public class RentService : IRentService
             total);
     }
 
+    public async Task UpdateUserAsync(string userId, UserDto user, DateTime? deletedDate, CancellationToken ct = default)
+    {
+        if (deletedDate == null)
+        {
+            await _userRepository.UpdateUserAsync(
+                new User
+                {
+                    UserId = userId,
+                    Username = user.Username,
+                    FullName = user.FullName,
+                    Email = user.Email,
+                    PhoneNumber = user.PhoneNumber,
+                    DriverLicense = user.DriverLicense,
+                    Verified = user.Verified,
+                    ModifiedDate = user.ModifiedDate,
+                    DeletedDate = null
+                }, ct);
+        }
+        else
+        {
+            await _userRepository.DeleteUserAsync(userId, deletedDate.Value, ct);
+        }
+    }
+
     public async Task<string> InitializeRentStartAsync(string userId, StartRentDto rentToStart, string idempotenceKey, CancellationToken ct = default)
     {
         Guard.NotNull(rentToStart, nameof(rentToStart));
@@ -57,11 +85,18 @@ public class RentService : IRentService
         
         using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
-        // check request for idempotency
+        // check idempotency
         if (!string.IsNullOrEmpty(idempotenceKey) &&
-            !await _reqRepository.CheckCreateRequestAsync(idempotenceKey, "StartRent", now, ct))
+            !await _cacheManager.SetIfNotExistAsync($"StartRent_{idempotenceKey}", JsonHelper.Serialize(rentToStart), ct))
         {
             throw new CrashConflictException("Idempotency error");
+        }
+        
+        // check user
+        var user = await _userRepository.GetUserAsync(userId, ct);
+        if (!user.Verified)
+        {
+            throw new CrashException($"User not verified");
         }
         
         // check user for active rents
@@ -102,6 +137,7 @@ public class RentService : IRentService
     {
         using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
+        var user = await GetUserSafeAsync(userId, ct);
         var rent = await _repository.GetUserRentAsync(userId, rentId, ct);
         if (rent.State != RentState.Starting)
         {
@@ -121,7 +157,8 @@ public class RentService : IRentService
         _eventProducer.ProduceNotificationWithNoWait(
             new NotificationMessage
             {
-                UserId = rent.UserId,
+                UserId = userId,
+                UserEmail = user?.Email,
                 Data = "Rent is started successfully"
             },
             _logger);
@@ -131,6 +168,7 @@ public class RentService : IRentService
     {
         using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
+        var user = await GetUserSafeAsync(userId, ct);
         var rent = await _repository.GetUserRentAsync(userId, rentId, ct);
         if (rent.State != RentState.Starting)
         {
@@ -150,7 +188,8 @@ public class RentService : IRentService
         _eventProducer.ProduceNotificationWithNoWait(
             new NotificationMessage
             {
-                UserId = rent.UserId,
+                UserId = userId,
+                UserEmail = user?.Email,
                 Data = $"Rent is not started. {rent.Message}"
             }, _logger);
     }
@@ -170,18 +209,25 @@ public class RentService : IRentService
         await _repository.UpdateActiveRentAsync(carId, mileage, ct);
     }
 
-    public async Task InitializeRentFinishAsync(string userId, string rentId, CancellationToken ct = default)
+    public async Task InitializeRentFinishAsync(string userId, string rentId, string idempotenceKey, CancellationToken ct = default)
     {
         Guard.NotNullOrEmpty(rentId, nameof(rentId));
+
+        using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
         
+        // check idempotency
+        if (!string.IsNullOrEmpty(idempotenceKey) &&
+            !await _cacheManager.SetIfNotExistAsync($"FinishRent_{idempotenceKey}", rentId, ct))
+        {
+            throw new CrashConflictException("Idempotency error");
+        }
+        
+        // update rent
         var rent = await _repository.GetUserRentAsync(userId, rentId, ct);
         if (rent.State != RentState.Started)
         {
             throw new CrashException("Rent is not started");
         }
-        
-        using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-
         rent.EndDate = DateTime.UtcNow;
         rent.State = RentState.Finishing;
         rent.Message = "Rent is finishing";
@@ -202,9 +248,11 @@ public class RentService : IRentService
 
     public async Task IssueInvoiceToFinishRentAsync(string userId, string rentId, CarDto car, CancellationToken ct = default)
     {
+        User user = null;
         Rent rent = null;
         try
         {
+            user = await GetUserSafeAsync(userId, ct); 
             rent = await _repository.GetUserRentAsync(userId, rentId, ct);
             if (rent.State != RentState.Finishing)
             {
@@ -255,6 +303,7 @@ public class RentService : IRentService
                     new NotificationMessage
                     {
                         UserId = userId,
+                        UserEmail = user?.Email,
                         Data = $"Rent is not finished. {rent.Message}"
                     }, _logger);
             }
@@ -265,6 +314,7 @@ public class RentService : IRentService
     {
         using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
+        var user = await GetUserSafeAsync(userId, ct);
         var rent = await _repository.GetUserRentAsync(userId, rentId, ct);
         if (rent.State != RentState.Finishing)
         {
@@ -285,6 +335,7 @@ public class RentService : IRentService
             new NotificationMessage
             {
                 UserId = rent.UserId,
+                UserEmail = user?.Email,
                 Data = "Rent is finished successfully"
             }, _logger);
     }
@@ -293,6 +344,7 @@ public class RentService : IRentService
     {
         using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
+        var user = await GetUserSafeAsync(userId, ct);
         var rent = await _repository.GetUserRentAsync(userId, rentId, ct);
         if (rent.State != RentState.Finishing)
         {
@@ -313,7 +365,21 @@ public class RentService : IRentService
             new NotificationMessage
             {
                 UserId = rent.UserId,
+                UserEmail = user?.Email,
                 Data = $"Rent is not finished. {rent.Message}"
             }, _logger);
+    }
+
+    private async Task<User> GetUserSafeAsync(string userId, CancellationToken ct = default)
+    {
+        try
+        {
+            return await _userRepository.GetUserAsync(userId, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unable to get user");
+            return null;
+        }
     }
 }

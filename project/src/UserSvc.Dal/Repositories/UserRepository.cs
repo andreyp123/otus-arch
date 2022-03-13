@@ -13,35 +13,45 @@ namespace UserSvc.Dal.Repositories;
 public class UserRepository : IUserRepository
 {
     private readonly ILogger<UserRepository> _logger;
-    private readonly UserDbContext _dbContext;
+    private readonly IDbContextFactory<UserDbContext> _dbContextFactory;
 
-    public UserRepository(ILogger<UserRepository> logger, UserDbContext dbContext)
+    public UserRepository(ILogger<UserRepository> logger, IDbContextFactory<UserDbContext> dbContextFactory)
     {
         _logger = logger;
-        _dbContext = dbContext;
+        _dbContextFactory = dbContextFactory;
     }
 
-    public async Task<string> CreateUserAsync(User user, CancellationToken ct = default)
+    public async Task<User> CreateUserAsync(User user, CancellationToken ct = default)
     {
         Guard.NotNull(user, nameof(user));
         Guard.NotNullOrEmpty(user.UserId, nameof(user.UserId));
         Guard.NotNullOrEmpty(user.Username, nameof(user.Username));
+        
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
 
-        if (await _dbContext.Users.AnyAsync(ue => ue.Username == user.Username, ct))
+        if (await dbContext.Users.AnyAsync(ue => ue.Username == user.Username, ct))
         {
             throw new CrashException($"Username {user.Username} already exists");
         }
 
-        await _dbContext.Users.AddAsync(MapUserEntity(user), ct);
-        await _dbContext.SaveChangesAsync(ct);
-        return user.UserId;
+        var now = DateTime.UtcNow;
+        var userEntity = MapUserEntity(user);
+        userEntity.CreatedDate = now;
+        userEntity.ModifiedDate = now;
+
+        await dbContext.Users.AddAsync(userEntity, ct);
+        await dbContext.SaveChangesAsync(ct);
+        
+        return MapUser(userEntity);
     }
 
     public async Task<(User[], int)> GetUsersAsync(int start, int size, CancellationToken ct = default)
     {
-        var total = await _dbContext.Users
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+        
+        var total = await dbContext.Users
             .CountAsync(ct);
-        var users = await _dbContext.Users
+        var users = await dbContext.Users
             .Skip(start)
             .Take(size)
             .Select(ue => MapUser(ue))
@@ -51,7 +61,9 @@ public class UserRepository : IUserRepository
 
     public async Task<User> GetUserAsync(string userId, CancellationToken ct = default)
     {
-        var userEntity = await _dbContext.Users.FirstOrDefaultAsync(ue => ue.UserId == userId, ct);
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+        
+        var userEntity = await dbContext.Users.FirstOrDefaultAsync(ue => ue.UserId == userId, ct);
         if (userEntity == null)
         {
             throw new CrashException($"User {userId} not found");
@@ -62,22 +74,26 @@ public class UserRepository : IUserRepository
 
     public async Task<User> GetUserByNameAsync(string username, CancellationToken ct = default)
     {
-        var userEntity = await _dbContext.Users.FirstOrDefaultAsync(ue => ue.Username == username, ct);
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+        
+        var userEntity = await dbContext.Users.FirstOrDefaultAsync(ue => ue.Username == username, ct);
         return MapUser(userEntity);
     }
 
-    public async Task UpdateUserAsync(string userId, User user, bool selfUpdate = true, CancellationToken ct = default)
+    public async Task<User> UpdateUserAsync(string userId, User user, bool selfUpdate = true, CancellationToken ct = default)
     {
         Guard.NotNull(user, nameof(user));
 
-        var userEntity = await _dbContext.Users.FirstOrDefaultAsync(ue => ue.UserId == userId, ct);
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+        
+        var userEntity = await dbContext.Users.FirstOrDefaultAsync(ue => ue.UserId == userId, ct);
         if (userEntity == null)
         {
             throw new CrashException($"User {userId} not found");
         }
 
         if (userEntity.Username != user.Username &&
-            await _dbContext.Users.AnyAsync(ue => ue.Username == user.Username && ue.UserId != userId, ct))
+            await dbContext.Users.AnyAsync(ue => ue.Username == user.Username && ue.UserId != userId, ct))
         {
             throw new CrashException($"Username {user.Username} already exists");
         }
@@ -98,20 +114,26 @@ public class UserRepository : IUserRepository
             userEntity.Verified = newUserEntity.Verified;
             userEntity.Roles = newUserEntity.Roles;
         }
+        
+        userEntity.ModifiedDate = DateTime.UtcNow;
 
-        await _dbContext.SaveChangesAsync(ct);
+        await dbContext.SaveChangesAsync(ct);
+
+        return MapUser(userEntity);
     }
 
     public async Task DeleteUserAsync(string userId, CancellationToken ct = default)
     {
-        var userEntity = await _dbContext.Users.FirstOrDefaultAsync(ue => ue.UserId == userId, ct);
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync(ct);
+        
+        var userEntity = await dbContext.Users.FirstOrDefaultAsync(ue => ue.UserId == userId, ct);
         if (userEntity == null)
         {
             throw new CrashException($"User {userId} not found");
         }
 
-        _dbContext.Users.Remove(userEntity);
-        await _dbContext.SaveChangesAsync(ct);
+        dbContext.Users.Remove(userEntity);
+        await dbContext.SaveChangesAsync(ct);
     }
 
     private static UserEntity MapUserEntity(User u)
@@ -148,7 +170,9 @@ public class UserRepository : IUserRepository
                 PasswordHash = ue.PasswordHash,
                 Roles = !string.IsNullOrWhiteSpace(ue.Roles)
                     ? ue.Roles.Split(",", StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-                    : Array.Empty<string>()
+                    : Array.Empty<string>(),
+                CreatedDate = ue.CreatedDate,
+                ModifiedDate = ue.ModifiedDate
             };
     }
 }

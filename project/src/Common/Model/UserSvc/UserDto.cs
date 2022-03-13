@@ -10,4 +10,6 @@ public class UserDto
     public string? DriverLicense { get; set; }
     public bool Verified { get; set; }
     public string[]? Roles { get; set; }
+    public DateTime CreatedDate { get; set; }
+    public DateTime ModifiedDate { get; set; }
 }

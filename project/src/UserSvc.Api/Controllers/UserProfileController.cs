@@ -7,6 +7,8 @@ using Microsoft.Extensions.Logging;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Common.Events.Producer;
+using UserSvc.Api.Extensions;
 using UserSvc.Dal.Repositories;
 
 namespace UserSvc.Api.Controllers;
@@ -17,11 +19,13 @@ public class UserProfileController : ControllerBase
 {
     private readonly ILogger<UserProfileController> _logger;
     private readonly IUserRepository _repository;
+    private readonly IEventProducer _eventProducer;
 
-    public UserProfileController(ILogger<UserProfileController> logger, IUserRepository repository)
+    public UserProfileController(ILogger<UserProfileController> logger, IUserRepository repository, IEventProducer eventProducer)
     {
         _logger = logger;
         _repository = repository;
+        _eventProducer = eventProducer;
     }
 
     [HttpPost("")]
@@ -32,7 +36,9 @@ public class UserProfileController : ControllerBase
         Guard.NotNullOrEmpty(profile.Username, nameof(profile.Username));
         Guard.NotNullOrEmpty(profile.Password, nameof(profile.Password));
 
-        await _repository.CreateUserAsync(
+        var ct = HttpContext.RequestAborted;
+
+        var createdUser = await _repository.CreateUserAsync(
             new User
             {
                 UserId = Generator.GenerateId(),
@@ -43,8 +49,9 @@ public class UserProfileController : ControllerBase
                 DriverLicense = profile.DriverLicense,
                 PasswordHash = Hasher.CalculateHash(profile.Password),
                 Roles = new[] {UserRoles.Client}
-            },
-            HttpContext.RequestAborted);
+            }, ct);
+        
+        _eventProducer.ProduceUserUpdatedWithNoWait(createdUser, _logger);
     }
 
     [HttpGet("")]
@@ -74,7 +81,10 @@ public class UserProfileController : ControllerBase
         Guard.NotNullOrEmpty(profile.Username, nameof(profile.Username));
 
         var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-        await _repository.UpdateUserAsync(userId,
+        
+        var ct = HttpContext.RequestAborted;
+        
+        var updatedUser = await _repository.UpdateUserAsync(userId,
             new User
             {
                 UserId = userId,
@@ -87,7 +97,8 @@ public class UserProfileController : ControllerBase
                     ? Hasher.CalculateHash(profile.Password)
                     : null
             },
-            selfUpdate: true,
-            HttpContext.RequestAborted);
+            selfUpdate: true, ct);
+        
+        _eventProducer.ProduceUserUpdatedWithNoWait(updatedUser, _logger);
     }
 }

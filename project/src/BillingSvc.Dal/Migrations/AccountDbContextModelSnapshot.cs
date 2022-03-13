@@ -63,6 +63,61 @@ namespace BillingSvc.Dal.Migrations
 
                     b.ToTable("accounts", "billing_svc");
                 });
+
+            modelBuilder.Entity("BillingSvc.Dal.Model.AccountEventEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("integer")
+                        .HasColumnName("account_id");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric")
+                        .HasColumnName("amount");
+
+                    b.Property<decimal>("Balance")
+                        .HasColumnType("numeric")
+                        .HasColumnName("balance");
+
+                    b.Property<DateTime>("EventDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("event_date");
+
+                    b.Property<string>("EventMessage")
+                        .HasColumnType("text")
+                        .HasColumnName("event_message");
+
+                    b.HasKey("Id")
+                        .HasName("pk_account_events");
+
+                    b.HasIndex("AccountId")
+                        .HasDatabaseName("ix_account_events_account_id");
+
+                    b.ToTable("account_events", "billing_svc");
+                });
+
+            modelBuilder.Entity("BillingSvc.Dal.Model.AccountEventEntity", b =>
+                {
+                    b.HasOne("BillingSvc.Dal.Model.AccountEntity", "Account")
+                        .WithMany("AccountEvents")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_account_events_accounts_account_id");
+
+                    b.Navigation("Account");
+                });
+
+            modelBuilder.Entity("BillingSvc.Dal.Model.AccountEntity", b =>
+                {
+                    b.Navigation("AccountEvents");
+                });
 #pragma warning restore 612, 618
         }
     }

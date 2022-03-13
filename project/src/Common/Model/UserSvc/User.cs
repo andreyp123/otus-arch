@@ -11,4 +11,6 @@ public class User
     public bool Verified { get; set; }
     public string? PasswordHash { get; set; }
     public string[]? Roles { get; set; }
+    public DateTime CreatedDate { get; set; }
+    public DateTime ModifiedDate { get; set; }
 }

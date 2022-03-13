@@ -1,5 +1,3 @@
-using Common.Model.CarSvc;
-
 namespace Common.Events.Messages;
 
 public class CarStateUpdatedMessage

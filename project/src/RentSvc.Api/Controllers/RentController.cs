@@ -52,9 +52,12 @@ public class RentController : ControllerBase
 
     [HttpPost("{rentId}/finish")]
     [Authorize]
-    public async Task FinishRent(string rentId)
+    public async Task FinishRent(
+        [FromHeader(Name = "Idempotence-Key")] string idempotenceKey,
+        string rentId)
     {
         var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-        await _rentService.InitializeRentFinishAsync(userId, rentId, HttpContext.RequestAborted);
+        await _rentService.InitializeRentFinishAsync(userId, rentId, idempotenceKey,
+            HttpContext.RequestAborted);
     }
 }

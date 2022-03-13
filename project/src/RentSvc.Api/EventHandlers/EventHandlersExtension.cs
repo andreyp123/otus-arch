@@ -1,4 +1,5 @@
 using Common.Events.Consumer;
+using Common.Events.Producer;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace RentSvc.Api.EventHandlers;
@@ -17,6 +18,7 @@ public static class EventHandlersExtension
         services.AddSingleton<IEventHandler, PaymentPerformingFailedEventHandler>();
         services.AddSingleton<IEventHandler, CarReadyToFinishRentEventHandler>();
         services.AddSingleton<IEventHandler, CarNotReadyToFinishRentEventHandler>();
+        services.AddSingleton<IEventHandler, UserUpdatedEventHandler>();
         return services;
     }
 }

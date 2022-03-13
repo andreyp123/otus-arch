@@ -11,14 +11,21 @@ public static class UserDalExtension
         this IServiceCollection services)
     {
         services.AddSingleton<UserDalConfig>();
-        services.AddDbContext<UserDbContext>(
+        services.AddDbContextFactory<UserDbContext>(
             (provider, builder) =>
             {
                 var repoConfig = provider.GetRequiredService<UserDalConfig>();
                 builder.SetUpUserDbContext(repoConfig.ConnectionString);
             },
-            contextLifetime: ServiceLifetime.Scoped
-        );
+            lifetime: ServiceLifetime.Singleton);
+        // services.AddDbContext<UserDbContext>(
+        //     (provider, builder) =>
+        //     {
+        //         var repoConfig = provider.GetRequiredService<UserDalConfig>();
+        //         builder.SetUpUserDbContext(repoConfig.ConnectionString);
+        //     },
+        //     contextLifetime: ServiceLifetime.Scoped
+        // );
         services.AddScoped<IUserRepository, UserRepository>();
 
         services.AddHealthChecks()

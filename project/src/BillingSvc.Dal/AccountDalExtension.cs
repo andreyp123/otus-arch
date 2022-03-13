@@ -25,7 +25,7 @@ namespace BillingSvc.Dal
             //     },
             //     contextLifetime: ServiceLifetime.Scoped
             // );
-            services.AddScoped<IAccountRepository, AccountRepository>();
+            services.AddSingleton<IAccountRepository, AccountRepository>();
 
             services.AddHealthChecks()
                 .AddCheck<AccountDalHealthCheck>(AccountDalHealthCheck.NAME);

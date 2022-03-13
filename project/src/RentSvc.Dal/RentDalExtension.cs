@@ -27,7 +27,7 @@ namespace RentSvc.Dal
             //     contextLifetime: ServiceLifetime.Scoped
             // );
             services.AddSingleton<IRentRepository, RentRepository>();
-            services.AddSingleton<IRequestRepository, RequestRepository>();
+            services.AddSingleton<IUserRepository, UserRepository>();
 
             services.AddHealthChecks()
                 .AddCheck<RentDalHealthCheck>(RentDalHealthCheck.NAME);

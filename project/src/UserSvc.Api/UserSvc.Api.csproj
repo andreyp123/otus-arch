@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Common.Events\Common.Events.csproj" />
     <ProjectReference Include="..\Common\Common.csproj" />
     <ProjectReference Include="..\UserSvc.Dal\UserSvc.Dal.csproj" />
   </ItemGroup>

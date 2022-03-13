@@ -14,9 +14,9 @@
 
 ```helm install brocker -n crash -f ./kafka/values.yml bitnami/kafka```
 
-## 4. Apply configuration
+## 4. Install redis
 
-```kubectl apply -f ./app/config.yml```
+```helm install cache bitnami/redis```
 
 ## 5. Deploy application
 
