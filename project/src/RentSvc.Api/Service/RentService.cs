@@ -159,7 +159,7 @@ public class RentService : IRentService
             {
                 UserId = userId,
                 UserEmail = user?.Email,
-                Data = "Rent is started successfully"
+                Data = $"Rent {rentId} is started successfully"
             },
             _logger);
     }
@@ -190,7 +190,7 @@ public class RentService : IRentService
             {
                 UserId = userId,
                 UserEmail = user?.Email,
-                Data = $"Rent is not started. {rent.Message}"
+                Data = $"Rent {rentId} is not started. {rent.Message}"
             }, _logger);
     }
 
@@ -304,7 +304,7 @@ public class RentService : IRentService
                     {
                         UserId = userId,
                         UserEmail = user?.Email,
-                        Data = $"Rent is not finished. {rent.Message}"
+                        Data = $"Rent {rentId} is not finished. {rent.Message}"
                     }, _logger);
             }
         }
@@ -336,7 +336,7 @@ public class RentService : IRentService
             {
                 UserId = rent.UserId,
                 UserEmail = user?.Email,
-                Data = "Rent is finished successfully"
+                Data = $"Rent {rentId} is finished successfully"
             }, _logger);
     }
 
@@ -366,7 +366,7 @@ public class RentService : IRentService
             {
                 UserId = rent.UserId,
                 UserEmail = user?.Email,
-                Data = $"Rent is not finished. {rent.Message}"
+                Data = $"Rent {rentId} is not finished. {rent.Message}"
             }, _logger);
     }
 
