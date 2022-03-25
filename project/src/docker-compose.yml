@@ -55,6 +55,7 @@ services:
       - EventProducer__BootstrapServers=kafka:9092
       - EventConsumer__BootstrapServers=kafka:9092
       - CacheManager__RedisConnectionString=redis:6379
+      - Tracing__AgentHost=jaeger
     depends_on:
       postgres:
         condition: service_healthy
@@ -74,9 +75,9 @@ services:
       - NotificationDal__AutoMigrate=true
       - EventProducer__BootstrapServers=kafka:9092
       - EventConsumer__BootstrapServers=kafka:9092
-      - EmailSender__Username=
-      - EmailSender__Password=
-      - EmailSender__From=
+      - EmailSender__Username=crash202109@gmail.com
+      - EmailSender__Password=0B6jC9VvXR
+      - EmailSender__From=crash202109@gmail.com
     depends_on:
       postgres:
         condition: service_healthy
@@ -96,6 +97,7 @@ services:
       - CarDal__AutoMigrate=true
       - EventProducer__BootstrapServers=kafka:9092
       - EventConsumer__BootstrapServers=kafka:9092
+      - Tracing__AgentHost=jaeger
     depends_on:
       postgres:
         condition: service_healthy
@@ -152,6 +154,13 @@ services:
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
     depends_on:
       - kafka
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.25.0
+    ports:
+      - 16686:16686
+      - 6831:6831/udp
+      - 14269:14269
 
   redis:
     image: redis:6.0.2

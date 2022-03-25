@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,6 +11,7 @@ using Common.Events.Producer;
 using Common.Helpers;
 using Common.Model;
 using Common.Model.RentSvc;
+using Common.Tracing;
 using Microsoft.Extensions.Logging;
 using RentSvc.Api.Cache;
 using RentSvc.Api.Extensions;
@@ -27,15 +29,17 @@ public class RentService : IRentService
     private readonly IUserRepository _userRepository;
     private readonly IEventProducer _eventProducer;
     private readonly ICacheManager _cacheManager;
+    private readonly ITracer _tracer;
     
     public RentService(ILogger<RentService> logger, IRentRepository repository, IUserRepository userRepository,
-        IEventProducer eventProducer, ICacheManager cacheManager)
+        IEventProducer eventProducer, ICacheManager cacheManager, ITracer tracer)
     {
         _logger = logger;
         _repository = repository;
         _userRepository = userRepository;
         _eventProducer = eventProducer;
         _cacheManager = cacheManager;
+        _tracer = tracer;
     }
 
     public async Task<RentDto> GetUserRentAsync(string userId, string rentId, CancellationToken ct = default)
@@ -81,9 +85,11 @@ public class RentService : IRentService
         Guard.NotNull(rentToStart, nameof(rentToStart));
         Guard.NotNullOrEmpty(rentToStart.CarId, nameof(rentToStart.CarId));
         
+        using var activity = _tracer.StartActivity("InitializeRentStart");
+        
         DateTime now = DateTime.UtcNow;
         
-        using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+        using var tran = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
         // check idempotency
         if (!string.IsNullOrEmpty(idempotenceKey) &&
@@ -125,17 +131,18 @@ public class RentService : IRentService
             {
                 RentId = rent.RentId,
                 CarId = rent.CarId,
-                UserId = rent.UserId
+                UserId = rent.UserId,
+                TracingContext = _tracer.GetContext(activity)
             }, ct);
         
-        scope.Complete();
+        tran.Complete();
         
         return rent.RentId;
     }
 
     public async Task CompleteRentStartAsync(string userId, string rentId, CancellationToken ct = default)
     {
-        using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+        using var tran = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
         var user = await GetUserSafeAsync(userId, ct);
         var rent = await _repository.GetUserRentAsync(userId, rentId, ct);
@@ -151,7 +158,7 @@ public class RentService : IRentService
         rent.Message = "Rent is started";
         await _repository.UpdateRentAsync(rentId, rent, ct);
         
-        scope.Complete();
+        tran.Complete();
             
         // send notification
         _eventProducer.ProduceNotificationWithNoWait(
@@ -164,9 +171,12 @@ public class RentService : IRentService
             _logger);
     }
 
-    public async Task FailRentStartAsync(string userId, string rentId, string errorMessage, CancellationToken ct = default)
+    public async Task FailRentStartAsync(string userId, string rentId, string errorMessage,
+        Dictionary<string, string> tracingContext = null, CancellationToken ct = default)
     {
-        using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+        using var activity = _tracer.StartActivity("FailRentStart", tracingContext);
+        
+        using var tran = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
         var user = await GetUserSafeAsync(userId, ct);
         var rent = await _repository.GetUserRentAsync(userId, rentId, ct);
@@ -182,7 +192,7 @@ public class RentService : IRentService
         rent.Message = $"Rent starting failed. {errorMessage}";
         await _repository.UpdateRentAsync(rentId, rent, ct);
 
-        scope.Complete();
+        tran.Complete();
             
         // send notification
         _eventProducer.ProduceNotificationWithNoWait(
@@ -194,8 +204,11 @@ public class RentService : IRentService
             }, _logger);
     }
 
-    public async Task UpdateInitialCarStateAsync(string userId, string rentId, CarDto car, CancellationToken ct = default)
+    public async Task UpdateInitialCarStateAsync(string userId, string rentId, CarDto car,
+        Dictionary<string, string> tracingContext = null, CancellationToken ct = default)
     {
+        using var activity = _tracer.StartActivity("UpdateInitialCarState", tracingContext);
+        
         var rent = await _repository.GetUserRentAsync(userId, rentId, ct);
             
         rent.StartMileage = car.Mileage;
@@ -213,7 +226,7 @@ public class RentService : IRentService
     {
         Guard.NotNullOrEmpty(rentId, nameof(rentId));
 
-        using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+        using var tran = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
         
         // check idempotency
         if (!string.IsNullOrEmpty(idempotenceKey) &&
@@ -243,7 +256,7 @@ public class RentService : IRentService
                 UserId = rent.UserId
             }, ct);
 
-        scope.Complete();
+        tran.Complete();
     }
 
     public async Task IssueInvoiceToFinishRentAsync(string userId, string rentId, CarDto car, CancellationToken ct = default)
@@ -312,7 +325,7 @@ public class RentService : IRentService
 
     public async Task CompleteRentFinishAsync(string userId, string rentId, CancellationToken ct = default)
     {
-        using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+        using var tran = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
         var user = await GetUserSafeAsync(userId, ct);
         var rent = await _repository.GetUserRentAsync(userId, rentId, ct);
@@ -328,7 +341,7 @@ public class RentService : IRentService
         rent.Message = "Rent is finished";
         await _repository.UpdateRentAsync(rentId, rent, ct);
         
-        scope.Complete();
+        tran.Complete();
             
         // send notification
         _eventProducer.ProduceNotificationWithNoWait(
@@ -342,7 +355,7 @@ public class RentService : IRentService
 
     public async Task FailRentFinishAsync(string userId, string rentId, string errorMessage, CancellationToken ct = default)
     {
-        using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+        using var tran = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
         var user = await GetUserSafeAsync(userId, ct);
         var rent = await _repository.GetUserRentAsync(userId, rentId, ct);
@@ -358,7 +371,7 @@ public class RentService : IRentService
         rent.Message = $"Rent is started. Finishing attempt failed. {errorMessage}";
         await _repository.UpdateRentAsync(rentId, rent, ct);
 
-        scope.Complete();
+        tran.Complete();
             
         // send notification
         _eventProducer.ProduceNotificationWithNoWait(

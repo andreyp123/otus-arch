@@ -25,6 +25,6 @@ public class AccountAuthorizationFailedEventHandler : EventHandlerBase<AccountAu
     
     protected override async Task HandleMessageAsync(AccountAuthorizationFailedMessage msg, CancellationToken ct = default)
     {
-        await _rentService.FailRentStartAsync(msg.UserId, msg.RentId, msg.Message, ct);
+        await _rentService.FailRentStartAsync(msg.UserId, msg.RentId, msg.Message, msg.TracingContext, ct);
     }
 }

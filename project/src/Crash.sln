@@ -34,6 +34,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarSvc.Api", "CarSvc.Api\Ca
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Events", "Common.Events\Common.Events.csproj", "{CE721693-561E-44EB-A6A4-ADCF8CC3747F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Tracing", "Common.Tracing\Common.Tracing.csproj", "{F5FB1243-7E05-438F-B742-413DD09246AA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -88,6 +90,10 @@ Global
 		{CE721693-561E-44EB-A6A4-ADCF8CC3747F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CE721693-561E-44EB-A6A4-ADCF8CC3747F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CE721693-561E-44EB-A6A4-ADCF8CC3747F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5FB1243-7E05-438F-B742-413DD09246AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5FB1243-7E05-438F-B742-413DD09246AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5FB1243-7E05-438F-B742-413DD09246AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5FB1243-7E05-438F-B742-413DD09246AA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Common.Model;
@@ -17,9 +18,9 @@ public interface IRentService
     
     Task<string> InitializeRentStartAsync(string userId, StartRentDto rentToStart, string idempotenceKey, CancellationToken ct = default);
     Task CompleteRentStartAsync(string userId, string rentId, CancellationToken ct = default);
-    Task FailRentStartAsync(string userId, string rentId, string errorMessage, CancellationToken ct = default);
+    Task FailRentStartAsync(string userId, string rentId, string errorMessage, Dictionary<string, string> tracingContext = null, CancellationToken ct = default);
     
-    Task UpdateInitialCarStateAsync(string userId, string rentId, CarDto car, CancellationToken ct = default);
+    Task UpdateInitialCarStateAsync(string userId, string rentId, CarDto car, Dictionary<string, string> tracingContext = null, CancellationToken ct = default);
     Task UpdateRuntimeCarStateAsync(string carId, int? mileage, CancellationToken ct = default);
     
     Task InitializeRentFinishAsync(string userId, string rentId, string idempotenceKey, CancellationToken ct = default);

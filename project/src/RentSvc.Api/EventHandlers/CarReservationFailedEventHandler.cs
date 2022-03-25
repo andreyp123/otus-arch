@@ -25,6 +25,6 @@ public class CarReservationFailedEventHandler : EventHandlerBase<CarReservationF
 
     protected override async Task HandleMessageAsync(CarReservationFailedMessage msg, CancellationToken ct = default)
     {
-        await _rentService.FailRentStartAsync(msg.UserId, msg.RentId, msg.Message, ct);
+        await _rentService.FailRentStartAsync(msg.UserId, msg.RentId, msg.Message, msg.TracingContext, ct);
     }
 }

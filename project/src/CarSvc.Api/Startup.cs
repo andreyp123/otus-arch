@@ -11,6 +11,7 @@ using CarSvc.Dal;
 using System;
 using CarSvc.Api.EventHandlers;
 using Common.Events.Producer;
+using Common.Tracing;
 
 namespace CarSvc.Api
 {
@@ -52,6 +53,8 @@ namespace CarSvc.Api
                     }
                 });
             });
+
+            services.AddTracing();
 
             services.AddCarDal();
             services.AddEventProducer();

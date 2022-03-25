@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Common.Events;
@@ -25,6 +26,6 @@ public class CarReservedEventHandler : EventHandlerBase<CarReservedMessage>
     
     protected override async Task HandleMessageAsync(CarReservedMessage msg, CancellationToken ct = default)
     {
-        await _rentService.UpdateInitialCarStateAsync(msg.UserId, msg.RentId, msg.Car, ct);
+        await _rentService.UpdateInitialCarStateAsync(msg.UserId, msg.RentId, msg.Car, msg.TracingContext, ct);
     }
 }

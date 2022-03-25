@@ -10,6 +10,7 @@ using System;
 using Common.Events.Producer;
 using RentSvc.Dal;
 using Common.Extensions;
+using Common.Tracing;
 using RentSvc.Api.Cache;
 using RentSvc.Api.EventHandlers;
 using RentSvc.Api.Service;
@@ -55,6 +56,8 @@ namespace RentSvc.Api
                 });
             });
 
+            services.AddTracing();
+            
             services.AddRentDal();
             services.AddEventProducer();
             services.AddEventHandling();
