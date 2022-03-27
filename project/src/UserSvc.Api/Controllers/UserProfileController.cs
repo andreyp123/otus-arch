@@ -54,7 +54,8 @@ public class UserProfileController : ControllerBase
                 PhoneNumber = profile.PhoneNumber,
                 DriverLicense = profile.DriverLicense,
                 PasswordHash = Hasher.CalculateHash(profile.Password),
-                Roles = new[] {UserRoles.Client}
+                Roles = new[] {UserRoles.Client},
+                Verified = false
             }, ct);
         
         _eventProducer.ProduceUserUpdatedWithNoWait(createdUser, _logger, _tracer.GetContext(activity));
@@ -91,6 +92,12 @@ public class UserProfileController : ControllerBase
         var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
         
         var ct = HttpContext.RequestAborted;
+
+        var userBeforeUpdate = await _repository.GetUserAsync(userId, ct);
+        
+        bool userVerified = userBeforeUpdate.Verified &&
+                            userBeforeUpdate.FullName == profile.FullName &&
+                            userBeforeUpdate.DriverLicense == profile.DriverLicense;
         
         var updatedUser = await _repository.UpdateUserAsync(userId,
             new User
@@ -103,7 +110,8 @@ public class UserProfileController : ControllerBase
                 DriverLicense = profile.DriverLicense,
                 PasswordHash = !string.IsNullOrEmpty(profile.Password)
                     ? Hasher.CalculateHash(profile.Password)
-                    : null
+                    : null,
+                Verified = userVerified
             },
             selfUpdate: true, ct);
         

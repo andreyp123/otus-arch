@@ -108,13 +108,11 @@ public class UserRepository : IUserRepository
         {
             userEntity.PasswordHash = newUserEntity.PasswordHash;
         }
-
         if (!selfUpdate) // update by admin
         {
-            userEntity.Verified = newUserEntity.Verified;
             userEntity.Roles = newUserEntity.Roles;
         }
-        
+        userEntity.Verified = newUserEntity.Verified;
         userEntity.ModifiedDate = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync(ct);
