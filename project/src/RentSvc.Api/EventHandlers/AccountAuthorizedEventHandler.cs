@@ -25,6 +25,6 @@ public class AccountAuthorizedEventHandler : EventHandlerBase<AccountAuthorizedM
 
     protected override async Task HandleMessageAsync(AccountAuthorizedMessage msg, CancellationToken ct = default)
     {
-        await _rentService.CompleteRentStartAsync(msg.UserId, msg.RentId, ct);
+        await _rentService.CompleteRentStartAsync(msg.UserId, msg.RentId, msg.TracingContext, ct);
     }
 }

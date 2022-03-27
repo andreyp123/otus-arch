@@ -1,6 +1,6 @@
 namespace Common.Events.Messages;
 
-public class AccountAuthorizedMessage
+public class AccountAuthorizedMessage : MessageBase
 {
     public string RentId { get; set; }
     public string CarId { get; set; }

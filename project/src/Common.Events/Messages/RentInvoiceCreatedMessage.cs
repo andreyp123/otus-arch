@@ -1,6 +1,6 @@
 namespace Common.Events.Messages;
 
-public class RentInvoiceCreatedMessage
+public class RentInvoiceCreatedMessage : MessageBase
 {
     public string RentId { get; set; }
     public string CarId { get; set; }

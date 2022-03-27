@@ -1,6 +1,6 @@
 namespace Common.Events.Messages;
 
-public class NotificationMessage
+public class NotificationMessage : MessageBase
 {
     public string? UserId { get; set; }
     public string? UserEmail { get; set; }

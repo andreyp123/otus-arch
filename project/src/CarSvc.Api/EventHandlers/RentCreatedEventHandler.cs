@@ -20,7 +20,8 @@ public class RentCreatedEventHandler : EventHandlerBase<RentCreatedMessage>
     private readonly IEventProducer _eventProducer;
     private readonly ITracer _tracer;
 
-    public RentCreatedEventHandler(ILogger<RentCreatedEventHandler> logger, ICarRepository repository, IEventProducer eventProducer, ITracer tracer)
+    public RentCreatedEventHandler(ILogger<RentCreatedEventHandler> logger, ICarRepository repository,
+        IEventProducer eventProducer, ITracer tracer)
         : base(logger)
     {
         _logger = logger;
@@ -34,7 +35,7 @@ public class RentCreatedEventHandler : EventHandlerBase<RentCreatedMessage>
 
     protected override async Task HandleMessageAsync(RentCreatedMessage msg, CancellationToken ct = default)
     {
-        using var activity = _tracer.StartActivity("RentCreatedEventHandle", msg.TracingContext);
+        using var activity = _tracer.StartActivity("HandleRentCreated", msg.TracingContext);
         
         try
         {

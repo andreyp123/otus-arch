@@ -56,8 +56,11 @@ public class RentService : IRentService
             total);
     }
 
-    public async Task UpdateUserAsync(string userId, UserDto user, DateTime? deletedDate, CancellationToken ct = default)
+    public async Task UpdateUserAsync(string userId, UserDto user, DateTime? deletedDate,
+        Dictionary<string, string> tracingContext = null, CancellationToken ct = default)
     {
+        using var activity = _tracer.StartActivity("UpdateUser", tracingContext);
+        
         if (deletedDate == null)
         {
             await _userRepository.UpdateUserAsync(
@@ -80,7 +83,8 @@ public class RentService : IRentService
         }
     }
 
-    public async Task<string> InitializeRentStartAsync(string userId, StartRentDto rentToStart, string idempotenceKey, CancellationToken ct = default)
+    public async Task<string> InitializeRentStartAsync(string userId, StartRentDto rentToStart, string idempotenceKey,
+        CancellationToken ct = default)
     {
         Guard.NotNull(rentToStart, nameof(rentToStart));
         Guard.NotNullOrEmpty(rentToStart.CarId, nameof(rentToStart.CarId));
@@ -140,8 +144,11 @@ public class RentService : IRentService
         return rent.RentId;
     }
 
-    public async Task CompleteRentStartAsync(string userId, string rentId, CancellationToken ct = default)
+    public async Task CompleteRentStartAsync(string userId, string rentId,
+        Dictionary<string, string> tracingContext = null, CancellationToken ct = default)
     {
+        using var activity = _tracer.StartActivity("CompleteRentStart", tracingContext);
+        
         using var tran = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
         var user = await GetUserSafeAsync(userId, ct);
@@ -166,7 +173,8 @@ public class RentService : IRentService
             {
                 UserId = userId,
                 UserEmail = user?.Email,
-                Data = $"Rent {rentId} is started successfully"
+                Data = $"Rent {rentId} is started successfully",
+                TracingContext = _tracer.GetContext(activity)
             },
             _logger);
     }
@@ -200,7 +208,8 @@ public class RentService : IRentService
             {
                 UserId = userId,
                 UserEmail = user?.Email,
-                Data = $"Rent {rentId} is not started. {rent.Message}"
+                Data = $"Rent {rentId} is not started. {rent.Message}",
+                TracingContext = _tracer.GetContext(activity)
             }, _logger);
     }
 
@@ -217,14 +226,20 @@ public class RentService : IRentService
         await _repository.UpdateRentAsync(rentId, rent, ct);
     }
 
-    public async Task UpdateRuntimeCarStateAsync(string carId, int? mileage, CancellationToken ct = default)
+    public async Task UpdateRuntimeCarStateAsync(string carId, int? mileage,
+        Dictionary<string, string> tracingContext = null, CancellationToken ct = default)
     {
+        using var activity = _tracer.StartActivity("UpdateRuntimeCarState", tracingContext);
+        
         await _repository.UpdateActiveRentAsync(carId, mileage, ct);
     }
 
-    public async Task InitializeRentFinishAsync(string userId, string rentId, string idempotenceKey, CancellationToken ct = default)
+    public async Task InitializeRentFinishAsync(string userId, string rentId, string idempotenceKey,
+        CancellationToken ct = default)
     {
         Guard.NotNullOrEmpty(rentId, nameof(rentId));
+        
+        using var activity = _tracer.StartActivity("InitializeRentFinish");
 
         using var tran = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
         
@@ -253,14 +268,18 @@ public class RentService : IRentService
             {
                 RentId = rent.RentId,
                 CarId = rent.CarId,
-                UserId = rent.UserId
+                UserId = rent.UserId,
+                TracingContext = _tracer.GetContext(activity)
             }, ct);
 
         tran.Complete();
     }
 
-    public async Task IssueInvoiceToFinishRentAsync(string userId, string rentId, CarDto car, CancellationToken ct = default)
+    public async Task IssueInvoiceToFinishRentAsync(string userId, string rentId, CarDto car,
+        Dictionary<string, string> tracingContext = null, CancellationToken ct = default)
     {
+        using var activity = _tracer.StartActivity("IssueInvoiceToFinishRent", tracingContext);
+        
         User user = null;
         Rent rent = null;
         try
@@ -296,8 +315,8 @@ public class RentService : IRentService
                     CarId = car.CarId,
                     UserId = userId,
                     Amount = amount.Value,
-                    Message =
-                        $"Time: {(endDate - rent.StartDate).ToString()}; Distance: {distance}; Amount: {amount.Value}"
+                    Message = $"Time: {(endDate - rent.StartDate).ToString()}; Distance: {distance}; Amount: {amount.Value}",
+                    TracingContext = _tracer.GetContext(activity)
                 }, ct);
         }
         catch (Exception ex)
@@ -317,14 +336,18 @@ public class RentService : IRentService
                     {
                         UserId = userId,
                         UserEmail = user?.Email,
-                        Data = $"Rent {rentId} is not finished. {rent.Message}"
+                        Data = $"Rent {rentId} is not finished. {rent.Message}",
+                        TracingContext = _tracer.GetContext(activity)
                     }, _logger);
             }
         }
     }
 
-    public async Task CompleteRentFinishAsync(string userId, string rentId, CancellationToken ct = default)
+    public async Task CompleteRentFinishAsync(string userId, string rentId,
+        Dictionary<string, string> tracingContext = null, CancellationToken ct = default)
     {
+        using var activity = _tracer.StartActivity("CompleteRentFinish", tracingContext);
+        
         using var tran = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
         var user = await GetUserSafeAsync(userId, ct);
@@ -349,12 +372,16 @@ public class RentService : IRentService
             {
                 UserId = rent.UserId,
                 UserEmail = user?.Email,
-                Data = $"Rent {rentId} is finished successfully"
+                Data = $"Rent {rentId} is finished successfully",
+                TracingContext = _tracer.GetContext(activity)
             }, _logger);
     }
 
-    public async Task FailRentFinishAsync(string userId, string rentId, string errorMessage, CancellationToken ct = default)
+    public async Task FailRentFinishAsync(string userId, string rentId, string errorMessage,
+        Dictionary<string, string> tracingContext = null, CancellationToken ct = default)
     {
+        using var activity = _tracer.StartActivity("FailRentFinish", tracingContext);
+        
         using var tran = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
 
         var user = await GetUserSafeAsync(userId, ct);
@@ -379,7 +406,8 @@ public class RentService : IRentService
             {
                 UserId = rent.UserId,
                 UserEmail = user?.Email,
-                Data = $"Rent {rentId} is not finished. {rent.Message}"
+                Data = $"Rent {rentId} is not finished. {rent.Message}",
+                TracingContext = _tracer.GetContext(activity)
             }, _logger);
     }
 

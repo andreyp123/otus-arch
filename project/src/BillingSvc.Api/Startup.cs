@@ -11,6 +11,7 @@ using Microsoft.OpenApi.Models;
 using System;
 using BillingSvc.Api.EventHandlers;
 using Common.Events.Producer;
+using Common.Tracing;
 
 namespace BillingSvc.Api
 {
@@ -52,6 +53,8 @@ namespace BillingSvc.Api
                     }
                 });
             });
+
+            services.AddTracing();
 
             services.AddAccountDal();
             services.AddEventProducer();

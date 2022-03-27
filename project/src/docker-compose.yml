@@ -3,31 +3,36 @@ version: '3.8'
 services:
 
   user-svc:
-    image: andreyp123/crash-user-svc:0.3
+    image: andreyp123/crash-user-svc:0.4
     container_name: user-svc
     build:
       context: ./
       dockerfile: UserSvc.Api/Dockerfile
       args:
-        VERSION: 0.3.0
+        VERSION: 0.4.0
     ports:
       - 8000:8000
     environment:
       - UserDal__ConnectionString=server=postgres;port=5432;database=CrashDb;username=sa;password=sa;
       - UserDal__AutoMigrate=true
       - EventProducer__BootstrapServers=kafka:9092
+      - Tracing__AgentHost=jaeger
     depends_on:
       postgres:
         condition: service_healthy
+      kafka:
+        condition: service_started
+      jaeger:
+        condition: service_started
 
   billing-svc:
-    image: andreyp123/crash-billing-svc:0.3
+    image: andreyp123/crash-billing-svc:0.4
     container_name: billing-svc
     build:
       context: ./
       dockerfile: BillingSvc.Api/Dockerfile
       args:
-        VERSION: 0.3.0
+        VERSION: 0.4.0
     ports:
       - 8002:8002
     environment:
@@ -35,18 +40,23 @@ services:
       - AccountDal__AutoMigrate=true
       - EventProducer__BootstrapServers=kafka:9092
       - EventConsumer__BootstrapServers=kafka:9092
+      - Tracing__AgentHost=jaeger
     depends_on:
       postgres:
         condition: service_healthy
+      kafka:
+        condition: service_started
+      jaeger:
+        condition: service_started
 
   rent-svc:
-    image: andreyp123/crash-rent-svc:0.3
+    image: andreyp123/crash-rent-svc:0.4
     container_name: rent-svc
     build:
       context: ./
       dockerfile: RentSvc.Api/Dockerfile
       args:
-        VERSION: 0.3.0
+        VERSION: 0.4.0
     ports:
       - 8004:8004
     environment:
@@ -59,15 +69,21 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      kafka:
+        condition: service_started
+      redis:
+        condition: service_started
+      jaeger:
+        condition: service_started
 
   notification-svc:
-    image: andreyp123/crash-notification-svc:0.3
+    image: andreyp123/crash-notification-svc:0.4
     container_name: notification-svc
     build:
       context: ./
       dockerfile: NotificationSvc.Api/Dockerfile
       args:
-        VERSION: 0.3.0
+        VERSION: 0.4.0
     ports:
       - 8006:8006
     environment:
@@ -78,18 +94,23 @@ services:
       - EmailSender__Username=crash202109@gmail.com
       - EmailSender__Password=0B6jC9VvXR
       - EmailSender__From=crash202109@gmail.com
+      - Tracing__AgentHost=jaeger
     depends_on:
       postgres:
         condition: service_healthy
+      kafka:
+        condition: service_started
+      jaeger:
+        condition: service_started
 
   car-svc:
-    image: andreyp123/crash-car-svc:0.3
+    image: andreyp123/crash-car-svc:0.4
     container_name: car-svc
     build:
       context: ./
       dockerfile: CarSvc.Api/Dockerfile
       args:
-        VERSION: 0.3.0
+        VERSION: 0.4.0
     ports:
       - 8008:8008
     environment:
@@ -101,6 +122,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      kafka:
+        condition: service_started
+      jaeger:
+        condition: service_started
 
   postgres:
     image: postgres:14.0-alpine

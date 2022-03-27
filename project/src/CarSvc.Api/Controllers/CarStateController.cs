@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading;
@@ -9,6 +10,7 @@ using Common.Events;
 using Common.Events.Messages;
 using Common.Events.Producer;
 using Common.Model.CarSvc;
+using Common.Tracing;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -22,12 +24,15 @@ public class CarStateController : ControllerBase
     private readonly ILogger<CarStateController> _logger;
     private readonly ICarRepository _repository;
     private readonly IEventProducer _eventProducer;
+    private readonly ITracer _tracer;
 
-    public CarStateController(ILogger<CarStateController> logger, ICarRepository repository, IEventProducer eventProducer)
+    public CarStateController(ILogger<CarStateController> logger, ICarRepository repository, IEventProducer eventProducer,
+        ITracer tracer)
     {
         _logger = logger;
         _repository = repository;
         _eventProducer = eventProducer;
+        _tracer = tracer;
     }
     
     [HttpGet]
@@ -44,8 +49,10 @@ public class CarStateController : ControllerBase
     [Authorize]
     public async Task UpdateCarState(CarStateDto carState)
     {
-        var carId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;;
+        var carId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
 
+        using var activity = _tracer.StartActivity("UpdateCarState");
+        
         var ct = HttpContext.RequestAborted;
         var state = new CarState
         {
@@ -59,10 +66,10 @@ public class CarStateController : ControllerBase
         
         await _repository.UpdateCarStateAsync(carId, state, ct);
         
-        ProduceCarStateEvent(carId, state);
+        ProduceCarStateEvent(carId, state, activity);
     }
 
-    private void ProduceCarStateEvent(string carId, CarState state)
+    private void ProduceCarStateEvent(string carId, CarState state, Activity activity)
     {
         _eventProducer.ProduceEventAsync(
                 new EventKey(Topics.Cars, EventTypes.CarStateUpdated),
@@ -70,7 +77,8 @@ public class CarStateController : ControllerBase
                 {
                     CarId = carId,
                     DriveState = state.DriveState.ToString(),
-                    Mileage = state.Mileage
+                    Mileage = state.Mileage,
+                    TracingContext = _tracer.GetContext(activity)
                 },
                 new CancellationTokenSource(TimeSpan.FromSeconds(30)).Token)
             .ContinueWith(

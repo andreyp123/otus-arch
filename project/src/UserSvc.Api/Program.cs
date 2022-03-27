@@ -5,6 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using System;
+using Serilog;
 using UserSvc.Dal;
 using UserSvc.Dal.Model;
 
@@ -30,6 +31,10 @@ public class Program
         {
             IHost host = Host
                 .CreateDefaultBuilder(args)
+                .UseSerilog((context, services, loggerConfiguration) =>
+                {
+                    loggerConfiguration.ReadFrom.Configuration(context.Configuration);
+                })
                 .ConfigureServices((_, services) => services.AddUserDal())
                 .Build();
 
@@ -53,7 +58,12 @@ public class Program
 
     private static void RunWebHost(string[] args)
     {
-        IHost host = Host.CreateDefaultBuilder(args)
+        IHost host = Host
+            .CreateDefaultBuilder(args)
+            .UseSerilog((context, services, loggerConfiguration) =>
+            {
+                loggerConfiguration.ReadFrom.Configuration(context.Configuration);
+            })
             .ConfigureWebHostDefaults(webBuilder => { webBuilder.UseStartup<Startup>(); })
             .Build();
 

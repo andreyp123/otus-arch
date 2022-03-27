@@ -8,6 +8,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Common.Events.Producer;
+using Common.Tracing;
 using UserSvc.Api.Extensions;
 using UserSvc.Dal.Repositories;
 
@@ -20,12 +21,15 @@ public class UserProfileController : ControllerBase
     private readonly ILogger<UserProfileController> _logger;
     private readonly IUserRepository _repository;
     private readonly IEventProducer _eventProducer;
+    private readonly ITracer _tracer;
 
-    public UserProfileController(ILogger<UserProfileController> logger, IUserRepository repository, IEventProducer eventProducer)
+    public UserProfileController(ILogger<UserProfileController> logger, IUserRepository repository,
+        IEventProducer eventProducer, ITracer tracer)
     {
         _logger = logger;
         _repository = repository;
         _eventProducer = eventProducer;
+        _tracer = tracer;
     }
 
     [HttpPost("")]
@@ -35,6 +39,8 @@ public class UserProfileController : ControllerBase
         Guard.NotNull(profile, nameof(profile));
         Guard.NotNullOrEmpty(profile.Username, nameof(profile.Username));
         Guard.NotNullOrEmpty(profile.Password, nameof(profile.Password));
+        
+        using var activity = _tracer.StartActivity("CreateUserProfile");
 
         var ct = HttpContext.RequestAborted;
 
@@ -51,7 +57,7 @@ public class UserProfileController : ControllerBase
                 Roles = new[] {UserRoles.Client}
             }, ct);
         
-        _eventProducer.ProduceUserUpdatedWithNoWait(createdUser, _logger);
+        _eventProducer.ProduceUserUpdatedWithNoWait(createdUser, _logger, _tracer.GetContext(activity));
     }
 
     [HttpGet("")]
@@ -79,6 +85,8 @@ public class UserProfileController : ControllerBase
     {
         Guard.NotNull(profile, nameof(profile));
         Guard.NotNullOrEmpty(profile.Username, nameof(profile.Username));
+        
+        using var activity = _tracer.StartActivity("UpdateUserProfile");
 
         var userId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
         
@@ -99,6 +107,6 @@ public class UserProfileController : ControllerBase
             },
             selfUpdate: true, ct);
         
-        _eventProducer.ProduceUserUpdatedWithNoWait(updatedUser, _logger);
+        _eventProducer.ProduceUserUpdatedWithNoWait(updatedUser, _logger, _tracer.GetContext(activity));
     }
 }

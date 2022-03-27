@@ -25,6 +25,6 @@ public class PaymentPerformedEventHandler : EventHandlerBase<PaymentPerformedMes
     
     protected override async Task HandleMessageAsync(PaymentPerformedMessage msg, CancellationToken ct = default)
     {
-        await _rentService.CompleteRentFinishAsync(msg.UserId, msg.RentId, ct);
+        await _rentService.CompleteRentFinishAsync(msg.UserId, msg.RentId, msg.TracingContext, ct);
     }
 }

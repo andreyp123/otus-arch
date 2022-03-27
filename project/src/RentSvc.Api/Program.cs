@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using System;
 using RentSvc.Dal;
 using RentSvc.Dal.Model;
+using Serilog;
 
 namespace RentSvc.Api;
 
@@ -30,6 +31,10 @@ public class Program
         {
             IHost host = Host
                 .CreateDefaultBuilder(args)
+                .UseSerilog((context, services, loggerConfiguration) =>
+                {
+                    loggerConfiguration.ReadFrom.Configuration(context.Configuration);
+                })
                 .ConfigureServices((_, services) => services.AddRentDal())
                 .Build();
 
@@ -53,7 +58,12 @@ public class Program
 
     private static void RunWebHost(string[] args)
     {
-        IHost host = Host.CreateDefaultBuilder(args)
+        IHost host = Host
+            .CreateDefaultBuilder(args)
+            .UseSerilog((context, services, loggerConfiguration) =>
+            {
+                loggerConfiguration.ReadFrom.Configuration(context.Configuration);
+            })
             .ConfigureWebHostDefaults(webBuilder => { webBuilder.UseStartup<Startup>(); })
             .Build();
 

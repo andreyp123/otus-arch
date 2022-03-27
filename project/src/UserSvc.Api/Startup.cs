@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using System;
 using Common.Events.Producer;
+using Common.Tracing;
 using UserSvc.Dal;
 
 namespace UserSvc.Api
@@ -51,6 +52,8 @@ namespace UserSvc.Api
                     }
                 });
             });
+
+            services.AddTracing();
 
             services.AddUserDal();
             services.AddEventProducer();

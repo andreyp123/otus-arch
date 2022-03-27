@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;
 using OpenTelemetry.Context.Propagation;
@@ -28,6 +30,7 @@ public class Tracer : ITracer
             if (parentContext == null || parentContext.Count == 0)
             {
                 activity = _activitySrc.StartActivity(name, ActivityKind.Producer);
+                _logger.LogInformation($"Started activity '{name}' ({(activity != null ? "not null" : "null")})");
             }
             else
             {
@@ -40,6 +43,7 @@ public class Tracer : ITracer
                     });
                 Baggage.Current = context.Baggage;
                 activity = _activitySrc.StartActivity(name, ActivityKind.Producer, context.ActivityContext);
+                _logger.LogInformation($"Started activity '{name}' with parent ({(activity != null ? "not null" : "null")})");
             }
         }
         catch (Exception ex)
@@ -63,7 +67,11 @@ public class Tracer : ITracer
                     dictionary[key] = value;
                 });
         }
+        
+        _logger.LogInformation($"Get tracing context from activity '{(activity != null ? activity.DisplayName : "NULL")}': {tracingContext.Count}, {JsonSerializer.Serialize(tracingContext)}");
 
         return tracingContext;
     }
+    
+    
 }

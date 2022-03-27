@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using System;
+using Serilog;
 
 namespace CarSvc.Api
 {
@@ -30,6 +31,10 @@ namespace CarSvc.Api
             {
                 IHost host = Host
                     .CreateDefaultBuilder(args)
+                    .UseSerilog((context, services, loggerConfiguration) =>
+                    {
+                        loggerConfiguration.ReadFrom.Configuration(context.Configuration);
+                    })
                     .ConfigureServices((_, services) => services.AddCarDal())
                     .Build();
 
@@ -54,7 +59,12 @@ namespace CarSvc.Api
 
         private static void RunWebHost(string[] args)
         {
-            IHost host = Host.CreateDefaultBuilder(args)
+            IHost host = Host
+                .CreateDefaultBuilder(args)
+                .UseSerilog((context, services, loggerConfiguration) =>
+                {
+                    loggerConfiguration.ReadFrom.Configuration(context.Configuration);
+                })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();

@@ -10,6 +10,7 @@ using Common.Events.Consumer;
 using Common.Events.Messages;
 using Common.Events.Producer;
 using Common.Model.CarSvc;
+using Common.Tracing;
 using Microsoft.Extensions.Logging;
 
 namespace CarSvc.Api.EventHandlers;
@@ -19,13 +20,16 @@ public class RentFinishRequestedEventHandler : EventHandlerBase<RentFinishReques
     private readonly ILogger<RentFinishRequestedEventHandler> _logger;
     private readonly ICarRepository _repository;
     private readonly IEventProducer _eventProducer;
+    private readonly ITracer _tracer;
     
-    public RentFinishRequestedEventHandler(ILogger<RentFinishRequestedEventHandler> logger, ICarRepository repository, IEventProducer eventProducer)
+    public RentFinishRequestedEventHandler(ILogger<RentFinishRequestedEventHandler> logger, ICarRepository repository,
+        IEventProducer eventProducer, ITracer tracer)
         : base(logger)
     {
         _logger = logger;
         _repository = repository;
         _eventProducer = eventProducer;
+        _tracer = tracer;
     }
 
     public override string Topic => Topics.Rents;
@@ -33,6 +37,8 @@ public class RentFinishRequestedEventHandler : EventHandlerBase<RentFinishReques
     
     protected override async Task HandleMessageAsync(RentFinishRequestedMessage msg, CancellationToken ct = default)
     {
+        using var activity = _tracer.StartActivity("HandleRentFinishRequested", msg.TracingContext);
+        
         try
         {
             using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
@@ -53,7 +59,8 @@ public class RentFinishRequestedEventHandler : EventHandlerBase<RentFinishReques
                 {
                     RentId = msg.RentId,
                     UserId = msg.UserId,
-                    Car = CarMapper.MapCarDto(car)
+                    Car = CarMapper.MapCarDto(car),
+                    TracingContext = _tracer.GetContext(activity)
                 }, ct);
 
             scope.Complete();
@@ -67,7 +74,8 @@ public class RentFinishRequestedEventHandler : EventHandlerBase<RentFinishReques
                     RentId = msg.RentId,
                     CarId = msg.CarId,
                     UserId = msg.UserId,
-                    Message = $"Car not ready to finish rent. {ex.Message}"
+                    Message = $"Car not ready to finish rent. {ex.Message}",
+                    TracingContext = _tracer.GetContext(activity)
                 }, ct);
         }
     }

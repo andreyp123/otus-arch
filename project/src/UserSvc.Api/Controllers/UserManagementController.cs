@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using System.Linq;
 using System.Threading.Tasks;
 using Common.Events.Producer;
+using Common.Tracing;
 using UserSvc.Api.Extensions;
 using UserSvc.Api.Helpers;
 using UserSvc.Dal.Repositories;
@@ -21,12 +22,15 @@ public class UserManagementController : ControllerBase
     private readonly ILogger<UserManagementController> _logger;
     private readonly IUserRepository _repository;
     private readonly IEventProducer _eventProducer;
+    private readonly ITracer _tracer;
 
-    public UserManagementController(ILogger<UserManagementController> logger, IUserRepository repository, IEventProducer eventProducer)
+    public UserManagementController(ILogger<UserManagementController> logger, IUserRepository repository,
+        IEventProducer eventProducer, ITracer tracer)
     {
         _logger = logger;
         _repository = repository;
         _eventProducer = eventProducer;
+        _tracer = tracer;
     }
 
     [HttpPost("")]
@@ -36,6 +40,8 @@ public class UserManagementController : ControllerBase
         Guard.NotNull(user, nameof(user));
         Guard.NotNullOrEmpty(user.Username, nameof(user.Username));
         Guard.NotNullOrEmpty(user.Password, nameof(user.Password));
+
+        using var activity = _tracer.StartActivity("CreateUser");
 
         var ct = HttpContext.RequestAborted;
 
@@ -53,7 +59,7 @@ public class UserManagementController : ControllerBase
                 Roles = user.Roles
             }, ct);
         
-        _eventProducer.ProduceUserUpdatedWithNoWait(createdUser, _logger);
+        _eventProducer.ProduceUserUpdatedWithNoWait(createdUser, _logger, _tracer.GetContext(activity));
 
         return createdUser.UserId;
     }
@@ -83,6 +89,8 @@ public class UserManagementController : ControllerBase
         Guard.NotNullOrEmpty(userId, nameof(userId));
         Guard.NotNull(user, nameof(user));
         Guard.NotNullOrEmpty(user.Username, nameof(user.Username));
+
+        using var activity = _tracer.StartActivity("UpdateUser");
         
         var ct = HttpContext.RequestAborted;
 
@@ -103,15 +111,17 @@ public class UserManagementController : ControllerBase
             },
             selfUpdate: false, ct);
 
-        _eventProducer.ProduceUserUpdatedWithNoWait(updatedUser, _logger);
+        _eventProducer.ProduceUserUpdatedWithNoWait(updatedUser, _logger, _tracer.GetContext(activity));
     }
 
     [HttpDelete("{userId}")]
     [Authorize(Roles = UserRoles.Employee)]
     public async Task DeleteUser(string userId)
     {
+        using var activity = _tracer.StartActivity("DeleteUser");
+        
         await _repository.DeleteUserAsync(userId, HttpContext.RequestAborted);
         
-        _eventProducer.ProduceUserDeletedWithNoWait(userId, _logger);
+        _eventProducer.ProduceUserDeletedWithNoWait(userId, _logger, _tracer.GetContext(activity));
     }
 }

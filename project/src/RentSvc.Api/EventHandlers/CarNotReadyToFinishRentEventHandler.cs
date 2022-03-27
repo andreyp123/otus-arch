@@ -25,6 +25,6 @@ public class CarNotReadyToFinishRentEventHandler : EventHandlerBase<CarNotReadyT
     
     protected override async Task HandleMessageAsync(CarNotReadyToFinishRentMessage msg, CancellationToken ct = default)
     {
-        await _rentService.FailRentFinishAsync(msg.UserId, msg.RentId, msg.Message, ct);
+        await _rentService.FailRentFinishAsync(msg.UserId, msg.RentId, msg.Message, msg.TracingContext, ct);
     }
 }

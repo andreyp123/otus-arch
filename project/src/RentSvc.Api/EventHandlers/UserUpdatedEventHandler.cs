@@ -25,6 +25,6 @@ public class UserUpdatedEventHandler : EventHandlerBase<UserUpdatedMessage>
     
     protected override async Task HandleMessageAsync(UserUpdatedMessage msg, CancellationToken ct = default)
     {
-        await _rentService.UpdateUserAsync(msg.UserId, msg.User, msg.DeletedDate, ct);
+        await _rentService.UpdateUserAsync(msg.UserId, msg.User, msg.DeletedDate, msg.TracingContext, ct);
     }
 }

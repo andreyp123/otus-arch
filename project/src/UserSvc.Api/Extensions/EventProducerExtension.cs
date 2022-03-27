@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Common.Events;
@@ -12,19 +13,32 @@ namespace UserSvc.Api.Extensions;
 
 public static class EventProducerExtension
 {
-    public static void ProduceUserUpdatedWithNoWait(this IEventProducer eventProducer, User user, ILogger logger)
+    public static void ProduceUserUpdatedWithNoWait(this IEventProducer eventProducer, User user, ILogger logger,
+        Dictionary<string, string> tracingContext = null)
     {
         ProduceUserUpdatedWithNoWaitImpl(
             eventProducer,
-            new UserUpdatedMessage { UserId = user.UserId, User = UserMapper.MapUserDto(user) },
+            new UserUpdatedMessage
+            {
+                UserId = user.UserId,
+                User = UserMapper.MapUserDto(user),
+                TracingContext = tracingContext
+            },
             logger);
     }
     
-    public static void ProduceUserDeletedWithNoWait(this IEventProducer eventProducer, string userId, ILogger logger)
+    public static void ProduceUserDeletedWithNoWait(this IEventProducer eventProducer, string userId, ILogger logger,
+        Dictionary<string, string> tracingContext = null)
     {
         ProduceUserUpdatedWithNoWaitImpl(
             eventProducer,
-            new UserUpdatedMessage { UserId = userId, User = null, DeletedDate = DateTime.UtcNow },
+            new UserUpdatedMessage
+            {
+                UserId = userId,
+                User = null,
+                DeletedDate = DateTime.UtcNow,
+                TracingContext = tracingContext
+            },
             logger);
     }
     

@@ -10,6 +10,7 @@ using Microsoft.OpenApi.Models;
 using NotificationSvc.Dal;
 using System;
 using Common.Events.Producer;
+using Common.Tracing;
 using NotificationSvc.Api.Email;
 using NotificationSvc.Api.EventHandlers;
 
@@ -53,6 +54,8 @@ namespace NotificationSvc.Api
                     }
                 });
             });
+
+            services.AddTracing();
 
             services.AddNotificationDal();
             services.AddEventProducer();

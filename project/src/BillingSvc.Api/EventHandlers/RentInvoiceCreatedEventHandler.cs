@@ -8,6 +8,7 @@ using Common.Events;
 using Common.Events.Consumer;
 using Common.Events.Messages;
 using Common.Events.Producer;
+using Common.Tracing;
 using Microsoft.Extensions.Logging;
 
 namespace BillingSvc.Api.EventHandlers;
@@ -17,13 +18,16 @@ public class RentInvoiceCreatedEventHandler : EventHandlerBase<RentInvoiceCreate
     private ILogger<RentInvoiceCreatedEventHandler> _logger;
     private readonly IAccountRepository _repository;
     private readonly IEventProducer _eventProducer;
+    private readonly ITracer _tracer;
     
-    public RentInvoiceCreatedEventHandler(ILogger<RentInvoiceCreatedEventHandler> logger, IAccountRepository repository, IEventProducer eventProducer)
+    public RentInvoiceCreatedEventHandler(ILogger<RentInvoiceCreatedEventHandler> logger, IAccountRepository repository,
+        IEventProducer eventProducer, ITracer tracer)
         : base(logger)
     {
         _logger = logger;
         _repository = repository;
         _eventProducer = eventProducer;
+        _tracer = tracer;
     }
 
     public override string Topic => Topics.Rents;
@@ -31,6 +35,8 @@ public class RentInvoiceCreatedEventHandler : EventHandlerBase<RentInvoiceCreate
     
     protected override async Task HandleMessageAsync(RentInvoiceCreatedMessage msg, CancellationToken ct = default)
     {
+        using var activity = _tracer.StartActivity("HandleRentInvoiceCreated", msg.TracingContext);
+        
         try
         {
             using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
@@ -49,7 +55,8 @@ public class RentInvoiceCreatedEventHandler : EventHandlerBase<RentInvoiceCreate
                 {
                     RentId = msg.RentId,
                     CarId = msg.CarId,
-                    UserId = msg.UserId
+                    UserId = msg.UserId,
+                    TracingContext = _tracer.GetContext(activity)
                 }, ct);
             
             scope.Complete();
@@ -63,7 +70,8 @@ public class RentInvoiceCreatedEventHandler : EventHandlerBase<RentInvoiceCreate
                     RentId = msg.RentId,
                     CarId = msg.CarId,
                     UserId = msg.UserId,
-                    Message = $"Payment performing failed. {ex.Message}"
+                    Message = $"Payment performing failed. {ex.Message}",
+                    TracingContext = _tracer.GetContext(activity)
                 }, ct);
         }
     }

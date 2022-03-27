@@ -4,6 +4,7 @@ ARG VERSION=0.0.1
 WORKDIR /src
 COPY ["Common/Common.csproj", "Common/"]
 COPY ["Common.Events/Common.Events.csproj", "Common.Events/"]
+COPY ["Common.Tracing/Common.Tracing.csproj", "Common.Tracing/"]
 COPY ["NotificationSvc.Dal/NotificationSvc.Dal.csproj", "NotificationSvc.Dal/"]
 COPY ["NotificationSvc.Api/NotificationSvc.Api.csproj", "NotificationSvc.Api/"]
 RUN dotnet restore "NotificationSvc.Api/NotificationSvc.Api.csproj"
