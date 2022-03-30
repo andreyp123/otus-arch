@@ -7,7 +7,7 @@ data:
   LOG_LEVEL: Information
   DB_CONNECTION_STRING: server=db-postgresql;port=5432;database=CrashDb;username=sa;password=sa;
   KAFKA_BOOTSTRAP_SERVERS: brocker-kafka:9092
-  REDIS_CONNECTION_STRING: cache-redis:6379
+  REDIS_CONNECTION_STRING: cache-redis-master:6379,password=redis
 
 ---
 
@@ -165,7 +165,7 @@ spec:
         app: user-svc
     spec:
       containers:            
-        - image: andreyp123/crash-user-svc:0.2
+        - image: andreyp123/crash-user-svc:0.4
           name: user-svc
           env:
             - name: UserDal__ConnectionString
@@ -223,7 +223,7 @@ spec:
         app: billing-svc
     spec:
       containers:            
-        - image: andreyp123/crash-billing-svc:0.2
+        - image: andreyp123/crash-billing-svc:0.4
           name: billing-svc
           env:
             - name: AccountDal__ConnectionString
@@ -286,7 +286,7 @@ spec:
         app: rent-svc
     spec:
       containers:            
-        - image: andreyp123/crash-rent-svc:0.2
+        - image: andreyp123/crash-rent-svc:0.4
           name: rent-svc
           env:
             - name: RentDal__ConnectionString
@@ -354,7 +354,7 @@ spec:
         app: notification-svc
     spec:
       containers:            
-        - image: andreyp123/crash-notification-svc:0.2
+        - image: andreyp123/crash-notification-svc:0.4
           name: notification-svc
           env:
             - name: NotificationDal__ConnectionString
@@ -417,7 +417,7 @@ spec:
         app: car-svc
     spec:
       containers:            
-        - image: andreyp123/crash-car-svc:0.2
+        - image: andreyp123/crash-car-svc:0.4
           name: notification-svc
           env:
             - name: CarDal__ConnectionString

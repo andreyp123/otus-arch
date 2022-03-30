@@ -16,7 +16,7 @@
 
 ## 4. Install redis
 
-```helm install cache bitnami/redis```
+```helm install cache -n crash -f ./redis/values.yml bitnami/redis```
 
 ## 5. Deploy application
 
