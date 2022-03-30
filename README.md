@@ -1,1 +1,1 @@
-# otus-arch
+Educational projects
