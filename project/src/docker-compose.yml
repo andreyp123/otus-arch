@@ -91,9 +91,9 @@ services:
       - NotificationDal__AutoMigrate=true
       - EventProducer__BootstrapServers=kafka:9092
       - EventConsumer__BootstrapServers=kafka:9092
-      - EmailSender__Username=crash202109@gmail.com
-      - EmailSender__Password=0B6jC9VvXR
-      - EmailSender__From=crash202109@gmail.com
+      - EmailSender__Username=
+      - EmailSender__Password=
+      - EmailSender__From=
       - Tracing__AgentHost=jaeger
     depends_on:
       postgres:
